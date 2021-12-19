@@ -1,7 +1,7 @@
 import logging, logging.handlers
 
 # Telegram Chat Bot Token
-telegram_token = '5050977880:AAElXPYQ6X84iFrQHUP-daUltKmGNpF5zCg'
+telegram_token = '2141967252:AAHbOShngBVTV8gon0EKo99zt3K_UMknMNM'
 
 
 GOTO_MENU, \
