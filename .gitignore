@@ -1,5 +1,6 @@
 /__pycache__
 /logs
 vars.py
+tmp.py
 nohup.out
 requires.txt
