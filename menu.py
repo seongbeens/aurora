@@ -938,7 +938,19 @@ def SETT_VehicleInfo(update, context):
   # Logging Conversation
   convLog(update, convLogger)
   
-  for i in sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_name', 'car_type', 'trim_badging', 'exterior_color', 'wheel_type', 'car_version', 'odometer', 'battery_range']):
+  tuples = sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_name', 'car_type', 'trim_badging', 'exterior_color', 'wheel_type', 'car_version', 'odometer', 'battery_range'])
+  
+  for i in tuples:
+    if None in i[:7]:
+      # Message
+      message = '\U000026A0 *아직 차량 정보가 서버에 없습니다.*\n서비스 가입 직후인 경우 데이터 수집에 어느 정도 시간이 소요됩니다.\n잠시 후 다시 시도해보세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+    
+      return SETTING_BACK
+
     # Message
     message = '*{}의 차량 정보입니다\U0001F619*\n\U0001F9E4 *차종* : {} {}\n'.format(i[0], car_type[i[1]], trim_badging[i[2]])\
             + '\U0001F9E4 *컬러* : {}\n\U0001F9E4 *휠* : {}\n'.format(exterior_color[i[3]], wheel_type[i[4]])\
