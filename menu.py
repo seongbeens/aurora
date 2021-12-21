@@ -236,13 +236,33 @@ def STAT_Execution(update, context, veh_id, editable_msg):
     update.message.reply_text(message, parse_mode = 'Markdown')
 
     # 소프트웨어 관련(vehicle_state/software_update)
-  if vehData['vehicle_state']['software_update']['status'] == 'available':
+  if vehData['vehicle_state']['software_update']['status'] == 'downloading':
+    message = '\U0001F199 *소프트웨어 업데이트 다운로드 중! ('\
+            + str(vehData['vehicle_state']['software_update']['download_perc'])\
+            + '%)*\n'\
+            + str(vehData['vehicle_state']['software_update']['version'])\
+            + ' 버전 소프트웨어를 다운로드하고 있어요:)\n'\
+            + '다운로드가 완료되면 오로라에서 업데이트를 실행할 수 있답니다\U0001F929\n'\
+            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+  elif vehData['vehicle_state']['software_update']['status'] == 'available':
     message = '\U0001F199 *소프트웨어 업데이트가 가능해요!*\n'\
             + str(vehData['vehicle_state']['software_update']['version'])\
-            + ' 버전의 소프트웨어가 준비되었습니다:)\n'\
+            + ' 버전 소프트웨어가 준비되었습니다:)\n'\
             + '멋있고 신비로운 기능을 기대하면서 Tesla 앱에서 업데이트를 진행해보세요\U0001F929\n'\
             + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
     update.message.reply_text(message, parse_mode = 'Markdown')
+
+  elif vehData['vehicle_state']['software_update']['status'] == 'scheduled':
+    message = '\U0001F199 *소프트웨어 업데이트가 곧 시작됩니다!*\n'\
+            + str(vehData['vehicle_state']['software_update']['version'])\
+            + ' 버전으로 곧 업데이트될 거에요:)\n이번 업데이트는 '\
+            + str(vehData['vehicle_state']['software_update']['expected_duration_sec']//60)\
+            + '분 정도 소요된답니다\U0001F929\n'\
+            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
   elif vehData['vehicle_state']['software_update']['status'] == 'installing':
     message = '\U0001F199 *소프트웨어 업데이트 진행 중! ('\
             + str(vehData['vehicle_state']['software_update']['install_perc'])\
@@ -251,7 +271,7 @@ def STAT_Execution(update, context, veh_id, editable_msg):
             + ' 버전으로 업데이트하고 있습니다:)\n'\
             + '업데이트 중에는 절대 주행하지 마세요\U0000203C\n'
     update.message.reply_text(message, parse_mode = 'Markdown')
-
+    
   return STATUS
 
 def STAT_Help(update, context):
