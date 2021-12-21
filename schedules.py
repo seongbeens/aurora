@@ -136,7 +136,7 @@ def __collect(chat_id, veh_id, data):
 
     # Update Vehicle Information
     if sql.modifyVehicle(chat_id, veh_id, columns, tuples):
-      logger.info('VEHSTAT: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') Successfully.')
+      logger.debug('VEHSTAT: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') Successfully.')
     
     else: logger.warning('VEHSTAT: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') Failed.')
 
