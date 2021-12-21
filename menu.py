@@ -1,4 +1,5 @@
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from api import *
@@ -458,118 +459,51 @@ def REMIND_ChrgTime_Help(update, context):
 
   return REMIND_CHRGTIME_BACK
 
-
-# Sentry Mode Automation - Common
-def SENTRY_Menu(update, context):
+# Scheduling Menu
+def SCHEDL_Menu(update, context):
   # Logging Conversation
   convLog(update, convLogger)
 
   # Message
   message = '이용하실 메뉴를 선택해주세요\U0001F636'
-  keyboard = [['스케줄 추가', '스케줄 삭제']]
-  keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+  keyboard = [['감시모드 자동화', '절전 방지 스케줄링']]
+  keyboard += [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-  return SENTRY_MENU
+  return SCHEDULING_MENU
 
-def SENTRY_Help(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-
-  # Message
-  message = '\U0001F9D0 *감시모드 자동화란?*\n'\
-          + '감시모드를 매번 수동으로 Tesla 앱에서 작동시킬 필요 없이 '\
-          + '특정 요일, 시간에 자동으로 켜고 끌 수 있는 스케줄링 기능입니다.\n'\
-          + '스케줄은 최대 5개까지 등록할 수 있으며, 차량이 2대 이상인 경우 자주 사용하는 차량에 대해 스케줄이 설정됩니다.\n'\
-          + '한 번 등록한 스케줄을 변경하려면 직접 삭제하고 다시 등록하여야 합니다.'
-  keyboard = [['\U0001F519 돌아가기']]
-
-  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
-
-  return SENTRY_BACK
-
-# SENTRY - Add Schedule
-def SENTRY_Add_FindValue(chat_id, veh_id, type):
-  columns = ['sentry_schedule_1', 'sentry_schedule_2',
-            'sentry_schedule_3', 'sentry_schedule_4', 'sentry_schedule_5']
-
-  lists = sql.inquiryVehicle(chat_id, veh_id, columns)
-
-  if type == 'DAY':
-    for i, j in enumerate(lists):
-      if j:
-        if not len(j) == 12:
-          return columns[i]
-    
-    for i, j in enumerate(lists):
-      if not j:
-        return columns[i]
-    
-    return 'FULL'
+# Sentry Mode Automation - Common
+class Sentry:
+  def __init__(self) -> None:
+    self.editable_msg = []
   
-  for i, j in enumerate(lists):
-    if type == 'TIME':
-      if j:
-        if len(j) == 7: return columns[i], j
+  def menu(self, update, context, rtn = False):
+    if not rtn:
+      # Logging Conversation
+      convLog(update, convLogger)
 
-    if type == 'ONOFF':
-      if j:
-        if len(j) == 11: return columns[i], j
-  
-  return 'NOT_FOUND', '0'
-
-def SENTRY_Add_Day(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-
-  # Message
-  message = '*스케줄을 설정할 요일을 입력하세요.*\n요일에 해당하는 한글로만 입력할 수 있습니다.\n예시 : 일, 월수금, 일월화수목금토\n등록을 취소하려면 \'취소\'를 입력하세요.'
-  update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
-
-  return SENTRY_ADD_DAY
-
-def SENTRY_Add_Day_invalid(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-
-  # Message
-  message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n요일에 해당하는 한글로만 입력할 수 있습니다.\n예시 : 일, 월수금, 일월화수목금토\n등록을 취소하려면 \'취소\'를 입력하세요.'
-  update.message.reply_text(message, parse_mode = 'Markdown')
-
-  message = '*스케줄을 설정할 요일을 입력하세요.*'
-  update.message.reply_text(message, parse_mode = 'Markdown')
-
-  return SENTRY_ADD_DAY
-
-def SENTRY_Add_Time(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-
-  def _createTimestamp():
-    _timestamp_list, _timestamp = [0 for _ in range(7)], ''
-
-    if '월' in update.message.text: _timestamp_list[0] = 1
-    if '화' in update.message.text: _timestamp_list[1] = 1
-    if '수' in update.message.text: _timestamp_list[2] = 1
-    if '목' in update.message.text: _timestamp_list[3] = 1
-    if '금' in update.message.text: _timestamp_list[4] = 1
-    if '토' in update.message.text: _timestamp_list[5] = 1
-    if '일' in update.message.text: _timestamp_list[6] = 1
-    for i in _timestamp_list: _timestamp += str(i)
-    
-    return _timestamp
-
-  _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-  _column = SENTRY_Add_FindValue(update.message.chat_id, _veh_id, 'DAY')
-  _timestamp = _createTimestamp()
-  
-  if _column == 'FULL':
     # Message
-    message = '\U000026A0 *더 이상 스케줄을 추가할 수 없습니다.*\n'\
-            + '감시모드 자동화 스케줄은 5개까지 저장할 수 있으며, 스케줄을 변경하시려면 기존 스케줄을 삭제한 후 새로 추가하여야 합니다.'
+    message = '이용하실 메뉴를 선택해주세요\U0001F636'
+    keyboard = [['스케줄 추가', '스케줄 삭제']]
+    keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+    update.effective_message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+    return SENTRY_MENU
+
+  def help(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    # Message
+    message = '\U0001F9D0 *감시모드 자동화란?*\n'\
+            + '감시모드를 매번 수동으로 Tesla 앱에서 작동시킬 필요 없이 '\
+            + '특정 요일, 시각에 자동으로 켜고 끌 수 있는 스케줄링 기능입니다.\n'\
+            + '스케줄은 최대 5개까지 등록할 수 있으며, 차량이 2대 이상인 경우 현재 선택된 차량에 대해 스케줄이 설정됩니다.\n'\
+            + '한 번 등록한 스케줄을 변경하려면 직접 삭제하고 다시 등록하여야 합니다.'
     keyboard = [['\U0001F519 돌아가기']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -577,51 +511,215 @@ def SENTRY_Add_Time(update, context):
 
     return SENTRY_BACK
 
-  if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+  # SENTRY - Add Schedule
+  def findValue(self, chat_id, veh_id, type):
+    columns = ['sentry_schedule_1', 'sentry_schedule_2',
+              'sentry_schedule_3', 'sentry_schedule_4', 'sentry_schedule_5']
+
+    lists = sql.inquiryVehicle(chat_id, veh_id, columns)
+
+    if type == 'DAY':
+      for i, j in enumerate(lists):
+        if j:
+          if not len(j) == 12:
+            return columns[i]
+      
+      for i, j in enumerate(lists):
+        if not j:
+          return columns[i]
+      
+      return 'FULL'
+    
+    for i, j in enumerate(lists):
+      if type == 'TIME':
+        if j:
+          if len(j) == 7: return columns[i], j
+
+      if type == 'ONOFF':
+        if j:
+          if len(j) == 11: return columns[i], j
+    
+    return 'NOT_FOUND', '0'
+
+  def addDay(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
     # Message
-    message = '*스케줄을 설정할 시간을 입력하세요.*\n시간은 4자리 숫자로만 입력할 수 있습니다.\n예시: 0600, 1530, 2300\n등록을 취소하려면 \'취소\'를 입력하세요.'
+    message = '*스케줄을 설정할 요일을 입력하세요.*\n입력 형식 : 일~토 중에 1~7글자\n입력 예시 : 일, 월수금, 일월화수목금토 등'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+    
+    return SENTRY_ADD_DAY
+
+  def addDay_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    # Message
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n입력 형식 : 일~토 중에 1~7글자\n입력 예시 : 일, 월수금, 일월화수목금토 등'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    message = '*스케줄을 설정할 요일을 입력하세요.*'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+    
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+
+    return SENTRY_ADD_DAY
+
+  def addTime(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    def _createTimestamp():
+      _timestamp_list, _timestamp = [0 for _ in range(7)], ''
+
+      if '월' in update.message.text: _timestamp_list[0] = 1
+      if '화' in update.message.text: _timestamp_list[1] = 1
+      if '수' in update.message.text: _timestamp_list[2] = 1
+      if '목' in update.message.text: _timestamp_list[3] = 1
+      if '금' in update.message.text: _timestamp_list[4] = 1
+      if '토' in update.message.text: _timestamp_list[5] = 1
+      if '일' in update.message.text: _timestamp_list[6] = 1
+      for i in _timestamp_list: _timestamp += str(i)
+      
+      return _timestamp
+
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column = Sentry_.findValue(update.message.chat_id, _veh_id, 'DAY')
+    _timestamp = _createTimestamp()
+    
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    if _column == 'FULL':
+      # Message
+      message = '\U000026A0 *더 이상 스케줄을 추가할 수 없습니다.*\n'\
+              + '감시모드 자동화 스케줄은 5개까지 저장할 수 있으며, 스케줄을 변경하시려면 기존 스케줄을 삭제한 후 새로 추가하여야 합니다.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return SENTRY_BACK
+
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '*스케줄을 설정할 시간을 입력하세요.*\n입력 형식 : 4자리 시간 형식(HHMM)\n입력 예시 : 0600, 1530, 2300 등'
+      markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+      
+      for i in self.editable_msg:
+        if i[0] == update.message.chat_id:
+          self.editable_msg.remove(i)
+          break
+
+      self.editable_msg.append([
+        update.message.chat_id, message,
+        update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+      ])
+
+      return SENTRY_ADD_TIME
+
+    else: return Sentry_.addTime(update, context)
+
+  def addTime_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    # Message
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n입력 형식 : 4자리 시간 형식(HHMM)\n입력 예시 : 0600, 1530, 2300 등'
     update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
+
+    message = '*스케줄을 설정할 시간을 입력하세요.*'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+    
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
 
     return SENTRY_ADD_TIME
 
-  else: return SENTRY_Add_Time(update, context)
+  def addOnOff(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+    
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column, _timestamp = Sentry_.findValue(update.message.chat_id, _veh_id, 'TIME')
+    _timestamp += str(update.message.text)
 
-def SENTRY_Add_Time_invalid(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    if _column == 'NOT_FOUND':
+      # Message
+      message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '일시적 오류일 수 있으니 처음부터 다시 진행해주세요.\n'\
+              + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
 
-  # Message
-  message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n시간은 4자리 숫자로만 입력할 수 있습니다.\n예시: 0600, 1530, 2300\n등록을 취소하려면 \'취소\'를 입력하세요.'
-  update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-  message = '*스케줄을 설정할 시간을 입력하세요.*'
-  update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
+      return SENTRY_BACK
 
-  return SENTRY_ADD_TIME
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '*스케줄이 동작할 유형을 선택하세요.*\n설정한 요일과 시간에 감시모드를 켜거나 끕니다.'
+      keyboard = [['감시모드 켜기 설정', '감시모드 끄기 설정'], ['\U0001F519 등록 취소']]
 
-def SENTRY_Add_OnOff(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-  
-  _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-  _column, _timestamp = SENTRY_Add_FindValue(update.message.chat_id, _veh_id, 'TIME')
-  _timestamp += str(update.message.text)
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-  if _column == 'NOT_FOUND':
+      return SENTRY_ADD_ONOFF
+
+    else: return Sentry_.addOnOff(update, context)
+
+  def addOnOff_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
     # Message
-    message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
-            + '일시적 오류일 수 있으니 처음부터 다시 진행해주세요.\n'\
-            + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
-    keyboard = [['\U0001F519 돌아가기']]
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n아래 버튼을 눌러서 설정해주세요.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
 
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-    update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
-
-    return SENTRY_BACK
-
-  if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
-    # Message
-    message = '*스케줄이 동작할 유형을 선택하세요.*\n설정한 요일과 시간에 감시모드를 켜거나 끕니다.'
+    message = '*스케줄이 동작할 유형을 선택하세요.*'
     keyboard = [['감시모드 켜기 설정', '감시모드 끄기 설정'], ['\U0001F519 등록 취소']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -629,138 +727,517 @@ def SENTRY_Add_OnOff(update, context):
 
     return SENTRY_ADD_ONOFF
 
-  else: return SENTRY_Add_OnOff(update, context)
+  def addDone(self, update, context):
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column, _timestamp = Sentry_.findValue(update.message.chat_id, _veh_id, 'ONOFF')
+    if update.message.text == '감시모드 켜기 설정': _timestamp += '1'
+    elif update.message.text == '감시모드 끄기 설정': _timestamp += '0'
 
-def SENTRY_Add_OnOff_invalid(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
+    if _column == 'NOT_FOUND':
+      # Logging Conversation
+      convLog(update, convLogger)
 
-  # Message
-  message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n아래 버튼을 눌러서 설정해주세요.'
-  update.message.reply_text(message, parse_mode = 'Markdown')
+      # Message
+      message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '서버의 누락이 있었을 수도 있습니다.\n처음부터 다시 진행해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
 
-  message = '*스케줄이 동작할 유형을 선택하세요.*'
-  keyboard = [['감시모드 켜기 설정', '감시모드 끄기 설정'], ['\U0001F519 등록 취소']]
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+      return SENTRY_BACK
 
-  return SENTRY_ADD_ONOFF
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '\U0001F31F *스케줄 등록이 완료되었습니다.*'
+      update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
 
-def SENTRY_Add_Done(update, context):
-  _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-  _column, _timestamp = SENTRY_Add_FindValue(update.message.chat_id, _veh_id, 'ONOFF')
-  if update.message.text == '감시모드 켜기 설정': _timestamp += '1'
-  elif update.message.text == '감시모드 끄기 설정': _timestamp += '0'
+      return Sentry_.menu(update, context)
+    
+    else: return Sentry_.addDone(update, context)
 
-  if _column == 'NOT_FOUND':
+  def addCancel_1(self, update, context):
+    # Message
+    message = '*스케줄 등록이 취소되었습니다.*'
+    update.callback_query.message.edit_text(message, parse_mode = 'Markdown')
+
+    return Sentry_.menu(update, context, True)
+
+  def addCancel_2(self, update, context):
+    # Message
+    message = '*스케줄 등록이 취소되었습니다.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    return Sentry_.menu(update, context, True)
+
+  # SENTRY: Delete Schedule
+  def delKeyboardMarkup(self, chat_id, veh_id):
+    columns = ['sentry_schedule_1',
+              'sentry_schedule_2',
+              'sentry_schedule_3',
+              'sentry_schedule_4',
+              'sentry_schedule_5']
+    keyboard, k = [], 0
+    keyboard.append([])
+    
+    # Markup Keyboard
+    try:
+      lists = sql.inquiryVehicle(chat_id, veh_id, columns)
+
+      for i, j in enumerate(lists):
+        if j:
+          if len(j) == 12:
+            if len(keyboard[k]) == 2:
+              keyboard.append([])
+              k += 1
+            j = '#' + str(i+1) + ' ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
+            keyboard[k].append(j)
+
+      keyboard += [['\U0001F519 돌아가기']]
+      return keyboard
+
+    except:
+      keyboard = [['\U0001F519 돌아가기']]
+      return keyboard
+
+  def delSelect(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+
+    # Message
+    message = '*삭제할 스케줄을 선택하세요.*\n삭제된 스케줄은 복구할 수 없습니다.'
+    keyboard = Sentry_.delKeyboardMarkup(update.message.chat_id, _veh_id)
+
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+    update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+    return SENTRY_DELETE
+
+  def delDone(self, update, context):
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column = 'sentry_schedule_' + update.message.text[1:2]
+    
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], ['']):
+      # Message
+      message = '\U0001F31F *스케줄이 삭제되었습니다.*'
+      update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
+
+      return Sentry_.menu(update, context)
+    
+    else:
+      # Logging Conversation
+      convLog(update, convLogger)
+
+      # Message
+      message = '\U000026A0 *삭제하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '처음부터 다시 진행해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return SENTRY_BACK
+
+  def del_invalid(self, update, context):
+    # Message
+    message = '\U000026A0 *입력된 스케줄을 찾을 수 없습니다.*\n'\
+            + '임의의 텍스트를 입력할 수 없어요:(\n'\
+            + '아래 버튼에 표시되는 등록된 스케줄을 선택하여 해당 스케줄을 삭제할 수 있습니다.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    return Sentry_.delSelect(update, context)
+
+
+# Prevent Goto Sleep
+class PreventSleep:
+  def __init__(self) -> None:
+    self.editable_msg = []
+
+  def menu(self, update, context, rtn = False):
+    if not rtn:
+      # Logging Conversation
+      convLog(update, convLogger)
+
+    # Message
+    message = '이용하실 메뉴를 선택해주세요\U0001F636'
+    keyboard = [['스케줄 추가', '스케줄 삭제']]
+    keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+    update.effective_message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+    return PREVENT_MENU
+
+  def help(self, update, context):
     # Logging Conversation
     convLog(update, convLogger)
 
     # Message
-    message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
-            + '서버의 누락이 있었을 수도 있습니다.\n처음부터 다시 진행해주세요.'
+    message = '\U0001F9D0 *절전 방지 스케줄링이란?*\n'\
+            + '12V 배터리 방전 방지 및 딥 슬립 방지 등을 위해 '\
+            + '매일 자동으로 차량을 온라인 상태로 유지시켜 주는 스케줄링 기능입니다. '\
+            + '(예시 : 매일 06시에 1시간동안 온라인 상태 유지)\n'\
+            + '유지 시간을 0시간으로 설정하면 차량을 한 번만 깨우고, 24시간으로 설정하면 매일 항시 온라인 상태를 유지하게끔 합니다.\n'\
+            + '스케줄은 차량별로 최대 2개까지 등록할 수 있으며, 스케줄 실행 시간이 중복되는 경우 나중에 실행되는 스케줄은 실행되지 않습니다.\n'\
+            + '차량이 2대 이상인 경우 현재 설정된 차량에 대해 스케줄이 설정됩니다.\n'\
+            + '한 번 등록한 스케줄을 변경하려면 직접 삭제하고 다시 등록하여야 합니다.'
     keyboard = [['\U0001F519 돌아가기']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
     update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-    return SENTRY_BACK
+    return PREVENT_BACK
 
-  if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
-    # Message
-    message = '\U0001F31F *스케줄 등록이 완료되었습니다.*'
-    update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
-
-    return SENTRY_Menu(update, context)
-  
-  else: return SENTRY_Add_Done(update, context)
-
-def SENTRY_Add_Cancel(update, context):
-  # Message
-  message = '*스케줄 등록이 취소되었습니다.*'
-  update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
-
-  return SENTRY_Menu(update, context)
-
-# SENTRY: Delete Schedule
-def SENTRY_Del_KeyboardMarkup(chat_id, veh_id):
-  columns = ['sentry_schedule_1',
-            'sentry_schedule_2',
-            'sentry_schedule_3',
-            'sentry_schedule_4',
-            'sentry_schedule_5']
-  keyboard, k = [], 0
-  keyboard.append([])
-  
-  # Markup Keyboard
-  try:
+  # Prevent - ADD
+  def findValue(self, chat_id, veh_id, type):
+    columns = ['prevent_sleep_1', 'prevent_sleep_2']
     lists = sql.inquiryVehicle(chat_id, veh_id, columns)
 
+    if type == 'DAY':
+      for i, j in enumerate(lists):
+        if j:
+          if not len(j) == 13:
+            return columns[i]
+      
+      for i, j in enumerate(lists):
+        if not j:
+          return columns[i]
+      
+      return 'FULL'
+    
     for i, j in enumerate(lists):
-      if j:
-        if len(j) == 12:
-          if len(keyboard[k]) == 2:
-            keyboard.append([])
-            k += 1
-          j = '#' + str(i+1) + ' ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
-          keyboard[k].append(j)
+      if type == 'TIME':
+        if j:
+          if len(j) == 7: return columns[i], j
 
-    keyboard += [['\U0001F519 돌아가기']]
-    return keyboard
+      if type == 'REMAIN':
+        if j:
+          if len(j) == 11: return columns[i], j
+    
+    return 'NOT_FOUND', '0'
 
-  except:
-    keyboard = [['\U0001F519 돌아가기']]
-    return keyboard
-
-def SENTRY_Del_Select(update, context):
-  # Logging Conversation
-  convLog(update, convLogger)
-
-  _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-
-  # Message
-  message = '*삭제할 스케줄을 선택하세요.*\n삭제된 스케줄은 복구할 수 없습니다.'
-  keyboard = SENTRY_Del_KeyboardMarkup(update.message.chat_id, _veh_id)
-
-  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
-
-  return SENTRY_DELETE
-
-def SENTRY_Del_Done(update, context):
-  _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-  _column = 'sentry_schedule_' + update.message.text[1:2]
-  
-  if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], ['']):
-    # Message
-    message = '\U0001F31F *스케줄이 삭제되었습니다.*'
-    update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
-
-    return SENTRY_Menu(update, context)
-  
-  else:
+  def addDay(self, update, context):
     # Logging Conversation
     convLog(update, convLogger)
 
     # Message
-    message = '\U000026A0 *삭제하던 스케줄을 찾을 수 없습니다.*\n'\
-            + '처음부터 다시 진행해주세요.'
-    keyboard = [['\U0001F519 돌아가기']]
+    message = '*스케줄을 설정할 요일을 입력하세요.*\n입력 형식 : 일~토 중에 1~7글자\n입력 예시 : 일, 월수금, 일월화수목금토 등'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+    
+    return PREVENT_ADD_DAY
+
+  def addDay_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    # Message
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n입력 형식 : 일~토 중에 1~7글자\n입력 예시 : 일, 월수금, 일월화수목금토 등'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    message = '*스케줄을 설정할 요일을 입력하세요.*'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+    
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+
+    return PREVENT_ADD_DAY
+
+  def addTime(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    def _createTimestamp():
+      _timestamp_list, _timestamp = [0 for _ in range(7)], ''
+
+      if '월' in update.message.text: _timestamp_list[0] = 1
+      if '화' in update.message.text: _timestamp_list[1] = 1
+      if '수' in update.message.text: _timestamp_list[2] = 1
+      if '목' in update.message.text: _timestamp_list[3] = 1
+      if '금' in update.message.text: _timestamp_list[4] = 1
+      if '토' in update.message.text: _timestamp_list[5] = 1
+      if '일' in update.message.text: _timestamp_list[6] = 1
+      for i in _timestamp_list: _timestamp += str(i)
+      
+      return _timestamp
+
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column = PreventSleep_.findValue(update.message.chat_id, _veh_id, 'DAY')
+    _timestamp = _createTimestamp()
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    if _column == 'FULL':
+      # Message
+      message = '\U000026A0 *더 이상 스케줄을 추가할 수 없습니다.*\n'\
+              + '절전 방지 스케줄은 2개까지 저장할 수 있으며, 스케줄을 변경하시려면 기존 스케줄을 삭제한 후 새로 추가하여야 합니다.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return PREVENT_BACK
+
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '*스케줄이 시작될 시간을 입력하세요.*\n입력 형식 : 4자리 시간 형식(HHMM)\n입력 예시 : 0600, 1530, 2300 등'
+      markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+      
+      for i in self.editable_msg:
+        if i[0] == update.message.chat_id:
+          self.editable_msg.remove(i)
+          break
+
+      self.editable_msg.append([
+        update.message.chat_id, message,
+        update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+      ])
+
+      return PREVENT_ADD_TIME
+
+    else: return PreventSleep_.addTime(update, context)
+
+  def addTime_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    # Message
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n입력 형식 : 4자리 시간 형식(HHMM)\n입력 예시 : 0600, 1530, 2300 등'
+    update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
+
+    message = '*스케줄이 시작될 시간을 입력하세요.*'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+    
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+
+    return PREVENT_ADD_TIME
+
+  def addRemain(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+    
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column, _timestamp = PreventSleep_.findValue(update.message.chat_id, _veh_id, 'TIME')
+    _timestamp += str(update.message.text)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    if _column == 'NOT_FOUND':
+      # Message
+      message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '서버의 누락이 있었을 수도 있습니다.\n처음부터 다시 진행해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return PREVENT_BACK
+
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '*스케줄이 유지될 시간을 입력하세요.*\n입력 형식 : 0 ~ 24(시간)\n입력 예시 : 0, 1, 6, 12, 24 등'
+      markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+
+      for i in self.editable_msg:
+        if i[0] == update.message.chat_id:
+          self.editable_msg.remove(i)
+          break
+
+      self.editable_msg.append([
+        update.message.chat_id, message,
+        update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+      ])
+
+      return PREVENT_ADD_REMAIN
+
+    else: return PreventSleep_.addRemain(update, context)
+
+  def addRemain_invalid(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    # Message
+    message = '\U000026A0 *입력 형식에 맞지 않습니다.*\n입력 형식 : 0 ~ 24(시간)\n입력 예시 : 0, 1, 6, 12, 24 등'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    message = '*스케줄이 유지될 시간을 입력하세요.*'
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('설정 취소', callback_data = 'CANCEL')]])
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        self.editable_msg.remove(i)
+        break
+
+    self.editable_msg.append([
+      update.message.chat_id, message,
+      update.message.reply_text(message, reply_markup = markup, parse_mode = 'Markdown')
+    ])
+
+    return PREVENT_ADD_REMAIN
+
+  def addDone(self, update, context):
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column, _timestamp = PreventSleep_.findValue(update.message.chat_id, _veh_id, 'REMAIN')
+    if int(update.message.text) in range(0, 10): _timestamp += '0' + str(int(update.message.text))
+    else: _timestamp += str(update.message.text)
+
+    for i in self.editable_msg:
+      if i[0] == update.message.chat_id:
+        i[2].edit_text(text = i[1], reply_markup = InlineKeyboardMarkup([[]]), parse_mode = 'Markdown')
+        break
+    
+    if _column == 'NOT_FOUND':
+      # Logging Conversation
+      convLog(update, convLogger)
+
+      # Message
+      message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '서버의 누락이 있었을 수도 있습니다.\n처음부터 다시 진행해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return PREVENT_BACK
+
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], [_timestamp]):
+      # Message
+      message = '\U0001F31F *스케줄 등록이 완료되었습니다.*'
+      update.message.reply_text(message, parse_mode = 'Markdown')
+
+      return PreventSleep_.menu(update, context)
+    
+    else: return PreventSleep_.addDone(update, context)
+
+  def addCancel(self, update, context):
+    # Message
+    message = '*스케줄 등록이 취소되었습니다.*'
+    update.callback_query.message.edit_text(message, parse_mode = 'Markdown')
+        
+    return PreventSleep_.menu(update, context, True)
+
+  # PREVENT: Delete Schedule
+  def delKeyboardMarkup(self, chat_id, veh_id):
+    columns = ['prevent_sleep_1', 'prevent_sleep_2']
+    keyboard, k = [], 0
+    keyboard.append([])
+    
+    # Markup Keyboard
+    try:
+      lists = sql.inquiryVehicle(chat_id, veh_id, columns)
+
+      for i, j in enumerate(lists):
+        if j:
+          if len(j) == 13:
+            if len(keyboard[k]) == 1:
+              keyboard.append([])
+              k += 1
+            if int(j[11:]) == 0: j = '#' + str(i+1) + ' ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
+            else: j = '#' + str(i+1) + ' ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11] + '부터 ' + str(int(j[11:])) + '시간'
+            keyboard[k].append(j)
+
+      keyboard += [['\U0001F519 돌아가기']]
+      return keyboard
+
+    except:
+      keyboard = [['\U0001F519 돌아가기']]
+      return keyboard
+
+  def delSelect(self, update, context):
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+
+    # Message
+    message = '*삭제할 스케줄을 선택하세요.*\n삭제된 스케줄은 복구할 수 없습니다.'
+    keyboard = PreventSleep_.delKeyboardMarkup(update.message.chat_id, _veh_id)
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
     update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
-    return SENTRY_BACK
+    return PREVENT_DELETE
 
-def SENTRY_Del_invalid(update, context):
-  # Message
-  message = '\U000026A0 *입력된 스케줄을 찾을 수 없습니다.*\n'\
-          + '임의의 텍스트를 입력할 수 없어요:(\n'\
-          + '아래 버튼에 표시되는 등록된 스케줄을 선택하여 해당 스케줄을 삭제할 수 있습니다.'
-  update.message.reply_text(message, parse_mode = 'Markdown')
+  def delDone(self, update, context):
+    _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
+    _column = 'prevent_sleep_' + update.message.text[1:2]
+    
+    if sql.modifyVehicle(update.message.chat_id, _veh_id, [_column], ['']):
+      # Message
+      message = '\U0001F31F *스케줄이 삭제되었습니다.*'
+      update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
 
-  return SENTRY_Del_Select(update, context)
+      return PreventSleep_.menu(update, context)
+    
+    else:
+      # Logging Conversation
+      convLog(update, convLogger)
+
+      # Message
+      message = '\U000026A0 *삭제하던 스케줄을 찾을 수 없습니다.*\n'\
+              + '처음부터 다시 진행해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return SENTRY_BACK
+
+  def del_invalid(self, update, context):
+    # Message
+    message = '\U000026A0 *입력된 스케줄을 찾을 수 없습니다.*\n'\
+            + '임의의 텍스트를 입력할 수 없어요:(\n'\
+            + '아래 버튼에 표시되는 등록된 스케줄을 선택하여 해당 스케줄을 삭제할 수 있습니다.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    return PreventSleep_.delSelect(update, context)
 
 
 # Nearby Charging Station
@@ -1401,3 +1878,7 @@ def SETT_DefaultVehicle(update, context):
 # 충전 중 감시모드 자동 활성화 - 충전 종료 후 감시모드 종료
 
 #https://apis.openapi.sk.com/tmap/staticMap?version=1&appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&coordType=WGS84GEO&width=512&height=512&zoom=18&format=PNG&longitude=128.988343&latitude=35.219318&markers=128.988343,35.219318
+
+# Enable Classes
+Sentry_ = Sentry()
+PreventSleep_ = PreventSleep()

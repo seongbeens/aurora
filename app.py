@@ -82,7 +82,7 @@ def mainMenu(update, context, rtn = None):
 
   message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*'.format(vehicle_name, state[vehicle_state])
   keyboard = [['\U0001F5F3 내 차 브리핑', '\U0001F697 커맨드 앤 컨트롤'],
-              ['\U000023F0 충전 알리미', '\U0001F6A6 감시모드 자동화'],
+              ['\U0001F6A6 스케줄링', '\U000023F0 충전 알리미'],
               ['\U00002734 내 차 찾기', '\U0001F3DD 근처 충전소 찾기'],
               ['\U00002699 계정 및 연동 설정']]
 
@@ -146,8 +146,8 @@ def main():
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^\U0001F5F3'), STAT_Start, run_async = True),
         MessageHandler(Filters.regex('^\U0001F697'), control.menu),
+        MessageHandler(Filters.regex('^\U0001F6A6'), SCHEDL_Menu),
         MessageHandler(Filters.regex('^\U000023F0'), REMIND_Menu),
-        MessageHandler(Filters.regex('^\U0001F6A6'), SENTRY_Menu),
         MessageHandler(Filters.regex('^\U0001F3DD'), NEAR_Start, run_async = True),
         MessageHandler(Filters.regex('^\U00002734'), FIND_Location, run_async = True),
         MessageHandler(Filters.regex('^\U00002699'), SETT_Menu),
@@ -211,6 +211,88 @@ def main():
         MessageHandler(Filters.regex('^/종료$'), cancel),
         CallbackQueryHandler(control.Temperatures.set)],
       
+      # SCHEDULING
+      SCHEDULING_MENU:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^감시모드 자동화$'), Sentry_.menu),
+        MessageHandler(Filters.regex('^절전 방지 스케줄링$'), PreventSleep_.menu),
+        MessageHandler(Filters.regex('^\U0001F519'), mainMenu)],
+
+      # SCHE - SENTRY
+      SENTRY_MENU:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^스케줄 추가$'), Sentry_.addDay),
+        MessageHandler(Filters.regex('^스케줄 삭제$'), Sentry_.delSelect, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F3F7'), Sentry_.help),
+        MessageHandler(Filters.regex('^\U0001F519'), SCHEDL_Menu)],
+      SENTRY_ADD_DAY:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^[월화수목금토일]{1,7}$'), Sentry_.addTime),
+        MessageHandler(Filters.text, Sentry_.addDay_invalid),
+        CallbackQueryHandler(Sentry_.addCancel_1)],
+      SENTRY_ADD_TIME:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([01][0-9]|2[0-3])([0-5][0-9])$'), Sentry_.addOnOff),
+        MessageHandler(Filters.text, Sentry_.addTime_invalid),
+        CallbackQueryHandler(Sentry_.addCancel_1)],
+      SENTRY_ADD_ONOFF:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^(감시모드 켜기 설정|감시모드 끄기 설정)$'), Sentry_.addDone),
+        MessageHandler(Filters.regex('^\U0001F519'), Sentry_.addCancel_2),
+        MessageHandler(Filters.text, Sentry_.addOnOff_invalid)],
+      SENTRY_DELETE:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^#[1-5]'), Sentry_.delDone),
+        MessageHandler(Filters.regex('^\U0001F519'), Sentry_.menu),
+        MessageHandler(Filters.text, Sentry_.del_invalid)],
+      SENTRY_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), Sentry_.menu)],
+      
+      # SCHE - PREVENT
+      PREVENT_MENU:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^스케줄 추가$'), PreventSleep_.addDay),
+        MessageHandler(Filters.regex('^스케줄 삭제$'), PreventSleep_.delSelect, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F3F7'), PreventSleep_.help),
+        MessageHandler(Filters.regex('^\U0001F519'), SCHEDL_Menu)],
+      PREVENT_ADD_DAY:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^[월화수목금토일]{1,7}$'), PreventSleep_.addTime),
+        MessageHandler(Filters.text, PreventSleep_.addDay_invalid),
+        CallbackQueryHandler(PreventSleep_.addCancel)],
+      PREVENT_ADD_TIME:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([01][0-9]|2[0-3])([0-5][0-9])$'), PreventSleep_.addRemain),
+        MessageHandler(Filters.text, PreventSleep_.addTime_invalid),
+        CallbackQueryHandler(PreventSleep_.addCancel)],
+      PREVENT_ADD_REMAIN:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([0-9]|[01][0-9]|2[0-4])$'), PreventSleep_.addDone),
+        MessageHandler(Filters.text, PreventSleep_.addRemain_invalid),
+        CallbackQueryHandler(PreventSleep_.addCancel)],
+      PREVENT_DELETE:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^#[1-5]'), PreventSleep_.delDone),
+        MessageHandler(Filters.regex('^\U0001F519'), PreventSleep_.menu),
+        MessageHandler(Filters.text, PreventSleep_.del_invalid)],
+      PREVENT_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), PreventSleep_.menu)],
+      
       # REMIND
       REMIND_MENU:
         [CommandHandler('cancel', cancel),
@@ -239,43 +321,6 @@ def main():
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^\U0001F519'), REMIND_ChrgTime_SelectVeh, run_async = True)],
 
-      # SENTRY
-      SENTRY_MENU:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^스케줄 추가$'), SENTRY_Add_Day),
-        MessageHandler(Filters.regex('^스케줄 삭제$'), SENTRY_Del_Select, run_async = True),
-        MessageHandler(Filters.regex('^\U0001F3F7'), SENTRY_Help),
-        MessageHandler(Filters.regex('^\U0001F519'), mainMenu)],
-      SENTRY_ADD_DAY:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^[월화수목금토일]{1,7}$'), SENTRY_Add_Time),
-        MessageHandler(Filters.regex('^(취소|돌아가기)$'), SENTRY_Add_Cancel),
-        MessageHandler(Filters.text, SENTRY_Add_Day_invalid)],
-      SENTRY_ADD_TIME:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^([01][0-9]|2[0-3])([0-5][0-9])$'), SENTRY_Add_OnOff),
-        MessageHandler(Filters.regex('^(취소|돌아가기)$'), SENTRY_Add_Cancel),
-        MessageHandler(Filters.text, SENTRY_Add_Time_invalid)],
-      SENTRY_ADD_ONOFF:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^(감시모드 켜기 설정|감시모드 끄기 설정)$'), SENTRY_Add_Done),
-        MessageHandler(Filters.regex('^\U0001F519'), SENTRY_Add_Cancel),
-        MessageHandler(Filters.text, SENTRY_Add_OnOff_invalid)],
-      SENTRY_DELETE:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^#[1-5]'), SENTRY_Del_Done),
-        MessageHandler(Filters.regex('^\U0001F519'), SENTRY_Menu),
-        MessageHandler(Filters.text, SENTRY_Del_invalid)],
-      SENTRY_BACK:
-        [CommandHandler('cancel', cancel),
-        MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.regex('^\U0001F519'), SENTRY_Menu)],
-      
       # SETTING
       SETTING_MENU:
         [CommandHandler('cancel', cancel),

@@ -19,7 +19,7 @@ def COMMON_GetVehiclesConfig_Schedule():
   logger.debug('VEHCONF: Schedule has been executed.')
 
   _ThreadName = 'GetVehiclesConfigSchedule'
-  logger.debug('Thread ' + _ThreadName + ' started.')
+  logger.info('Thread ' + _ThreadName + ' started.')
   threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesConfig).start()
 
 def COMMON_GetVehiclesConfig():
@@ -44,7 +44,7 @@ def COMMON_GetVehiclesConfig():
         _tuples = [_data['car_type'], _data['trim_badging'], _data['efficiency_package'], _data['exterior_color'], _data['wheel_type']]
 
         if sql.modifyVehicle(_chat_id, _veh_id, _columns, _tuples):
-          logger.info('VEHCONF: modifyVehicle(' + str(_chat_id) + ', ' + str(_veh_id) + ') Successfully.')
+          logger.debug('VEHCONF: modifyVehicle(' + str(_chat_id) + ', ' + str(_veh_id) + ') Successfully.')
         
         else: logger.warning('VEHCONF: modifyVehicle(' + str(_chat_id) + ', ' + str(_veh_id) + ') Failed.')
       
@@ -58,9 +58,9 @@ def COMMON_GetVehiclesConfig():
       if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
     if not _ThreadExist:
-      threading.Thread(name = _ThreadName, target = _getApi, args = (tuples[0], tuples[1])).start()
       logger.debug('Thread ' + _ThreadName + ' started.')
-      time.sleep(5)
+      threading.Thread(name = _ThreadName, target = _getApi, args = (tuples[0], tuples[1])).start()
+      time.sleep(1)
 
 # Common - Get Vehicle State
 # & Reminder - Charging Complete
@@ -80,9 +80,9 @@ def COMMON_GetVehiclesState_Target():
       if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
     if not _ThreadExist:
-      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3])).start()
       logger.debug('Thread ' + _ThreadName + ' started.')
-      time.sleep(3)
+      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3])).start()
+      time.sleep(1)
 
 def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a):
   if getVehCurrent(chat_id, veh_id) == 'online':
@@ -207,7 +207,7 @@ def REMIND_ChrgTime_WakeVeh():
       _ThreadName = 'CTWAKE' + str(tuples[0]) + str(tuples[1])
       logger.info('Thread ' + _ThreadName + ' started.')
       threading.Thread(name = _ThreadName, target = wakeVehicle, args = (tuples[0], tuples[1])).start()
-      time.sleep(1)
+      time.sleep(0.1)
 
 
 # Reminder - Charge Time Alert
@@ -257,10 +257,44 @@ def REMIND_ChrgTime_Alert(chat_id, veh_id, veh_name):
     logger.error('REMIND_ChrgTime_Alert: Exception error that occurred in the TRY syntax.')
 
 
+# Sleep Preventer
+# Running every min.
+def PREVENT_Sleep_Schedule():
+  logger.info('PREVENT_Sleep: Schedule has been executed.')
+
+  _ThreadName = 'PreventSleepSchedule'
+  logger.debug('Thread ' + _ThreadName + ' started.')
+  threading.Thread(name = _ThreadName, target = PREVENT_Sleep_Target).start()
+
+def PREVENT_Sleep_Target():
+  for tuples in sql.inquiryVehicles(['prevent_sleep_1', 'prevent_sleep_2']):
+    for i in tuples[2:]:
+      if i:
+        if len(i) == 6: 
+          if datetime.now().strftime('%H%M') == i[:4]: # 시간 체크
+
+            _ThreadName, _ThreadExist = 'PSWAKE' + str(tuples[0]) + str(tuples[1]), False
+
+            for j in threading.enumerate():
+              if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+
+            if not _ThreadExist:
+              logger.info('Thread ' + _ThreadName + ' started.')
+              threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], int(i[4:]))).start()
+              time.sleep(0.1)
+              break
+
+def PREVENT_Sleep(chat_id, veh_id, remain_time):
+  logger.info('PREVENT_Sleep: just running. (range: 0)')
+  threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
+  for i in range(remain_time * 60 - 2):
+    time.sleep(60)
+    logger.info('PREVENT_Sleep: just running. (range: {})'.format(i + 1))
+    threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
+
+
 # Sentry Mode Switch Automation
 # Running Every Min.
-def isNan(value): return value != value
-
 def SENTRY_Switch_Schedule():
     logger.debug('SENTRY_Switch: Schedule has been executed.')
 
@@ -274,8 +308,6 @@ def SENTRY_Switch_Target():
     _schedules = []
 
     for i in tuples[2:]:
-      # if not isNan(i):
-      #   if len(i) == 12: _ts.append(i)
       if i:
         if len(i) == 12: _schedules.append(i)
 
@@ -313,13 +345,14 @@ def SENTRY_Switch(chat_id, veh_id, timestamps):
 
 # Execution
 def __schedules():
-  # SENTRY_Switch_Schedule()
-  # COMMON_GetVehiclesConfig_Schedule()
+  COMMON_GetVehiclesConfig_Schedule()
   # COMMON_GetVehiclesState_Schedule()
+  # SENTRY_Switch_Schedule()
   # schedule.every().day.at('16:27').do(REMIND_ChrgComplete_Schedule)
 
   schedule.every().hours.do(COMMON_GetVehiclesConfig_Schedule)
   schedule.every(2).minutes.do(COMMON_GetVehiclesState_Schedule)
+  schedule.every().minutes.do(PREVENT_Sleep_Schedule)
   schedule.every().minutes.do(SENTRY_Switch_Schedule)
 
   schedule.every().monday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
@@ -337,7 +370,7 @@ def __schedules():
   
   while True:
     schedule.run_pending()
-    time.sleep(1)
+    time.sleep(0.5)
 
 if __name__ == '__main__':
   logger.info('Scheduler started.')
