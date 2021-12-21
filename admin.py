@@ -89,7 +89,7 @@ class Notice:
                 text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
               
               logger.info('bot.send_message({}) Successfully.'.format(str(i[0])))
-              time.sleep(0.2)
+              time.sleep(0.1)
             except Exception as e:
               print(e)
           
