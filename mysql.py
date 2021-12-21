@@ -14,7 +14,7 @@ def createAccount(chat_id):
     conn = connect()
     cur = conn.cursor()
     cur.execute(
-      "INSERT INTO Accounts SET telegram_id = %d "\
+      "INSERT INTO Accounts SET telegram_id = %s "\
     + "ON DUPLICATE KEY UPDATE date_recreate = current_timestamp", (chat_id))
     conn.commit()
     return True
