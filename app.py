@@ -297,13 +297,24 @@ def main():
       REMIND_MENU:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^충전 시작 알림 설정$'), REMIND_ChrgStart_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^충전 완료 알림 설정$'), REMIND_ChrgComplete_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^경부하 충전 알림 설정$'), REMIND_ChrgTime_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^\U0001F519'), mainMenu)],
+      REMIND_CHRGSTART_SELECT:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_ChrgStart_Set, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F3F7'), REMIND_ChrgStart_Help),
+        MessageHandler(Filters.regex('^\U0001F519'), REMIND_Menu)],
+      REMIND_CHRGSTART_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), REMIND_ChrgStart_SelectVeh, run_async = True)],
       REMIND_CHRGCOMP_SELECT:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_ChrgComplete_Set),
+        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_ChrgComplete_Set, run_async = True),
         MessageHandler(Filters.regex('^\U0001F3F7'), REMIND_ChrgComplete_Help),
         MessageHandler(Filters.regex('^\U0001F519'), REMIND_Menu)],
       REMIND_CHRGCOMP_BACK:
@@ -313,7 +324,7 @@ def main():
       REMIND_CHRGTIME_SELECT:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_ChrgTime_Set),
+        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_ChrgTime_Set, run_async = True),
         MessageHandler(Filters.regex('^\U0001F3F7'), REMIND_ChrgTime_Help),
         MessageHandler(Filters.regex('^\U0001F519'), REMIND_Menu)],
       REMIND_CHRGTIME_BACK:

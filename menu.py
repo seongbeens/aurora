@@ -279,11 +279,10 @@ def STAT_Help(update, context):
   convLog(update, convLogger)
 
   # Message
-  message = '\U0001F9D0 *더 자세한 정보가 궁금하신가요?*\n'\
-        + '모든 3rd-Party 연동 시스템은 외부 제공 API를 사용하고 있어서 '\
-        + '보여드릴 수 있는 정보가 제한되어요:(\n'\
-        + '또한, 최적화된 정보를 제공하기 위해 *차량의 실시간 상태에 따라 노출되는 정보가 변경되기도 해요.*\n'\
-        + '불편한 사항은 @TeslaAurora 로 문의주시면 적극 개선하도록 노력하겠습니다.'
+  message = '\U0001F9D0 *실시간으로 보여지는 정보가 다르나요?*\n'\
+          + '테슬라 오로라는 최적화된 정보를 제공하기 위해 차량의 실시간 상태에 따라 노출되는 정보가 변경되기도 해요.\n'\
+          + '예를 들어 충전 중일 때는 평소에 보이지 않던 충전 전류와 남은 시간에 대한 정보가 추가로 보이기도 하죠.\n'\
+          + '불편한 사항은 언제든 @TeslaAurora 로 문의주시면 적극 개선하도록 노력할게요!'
   keyboard = [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -291,10 +290,8 @@ def STAT_Help(update, context):
 
   message = '\U0001F9D0 *로딩이 느린 이유가 무엇인가요?*\n'\
           + '테슬라는 배터리 소모를 줄이기 위해 주차 후 일정 시간이 경과하면 절전 모드로 진입해요.\n'\
-          + '정확한 차량의 정보를 가져오려면 절전을 해제하여야 하고, '\
-          + '이 때 *1분 내외의 시간이 소요됩니다.*\n'\
-          + '차량이 절전 모드로 진입하지 않게 하려면 '\
-          + '감시모드를 활성화하거나 테슬라 오로라가 제공하는 *절전 방지 기능을 사용해주세요.*'
+          + '정확한 차량의 정보를 가져오려면 절전을 해제하여야 하고, 이 때 1분 내외의 시간이 소요됩니다.\n'\
+          + '차량이 절전 모드로 진입하지 않게 하려면 감시모드를 활성화하거나 테슬라 오로라가 제공하는 절전 방지 스케줄링을 사용해주세요.'
   update.message.reply_text(message, parse_mode = 'Markdown')
 
   return STATUS
@@ -325,13 +322,83 @@ def REMIND_Menu(update, context):
   convLog(update, convLogger)
 
   # Message
-  message = '이용하실 메뉴를 선택해주세요\U0001F636'
-  keyboard = [['충전 완료 알림 설정', '경부하 충전 알림 설정'], ['\U0001F519 돌아가기']]
+  message = '충전 알리미 메뉴에요\U0001F636'
+  keyboard = [['충전 시작 알림 설정', '충전 완료 알림 설정'], ['경부하 충전 알림 설정'], ['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
   return REMIND_MENU
+
+# Reminder - Start Charging Alert
+def REMIND_ChrgStart_SelectVeh(update, context, rtn = None):
+  if not rtn:
+    # Logging Conversation
+    convLog(update, convLogger)
+
+  # Message
+  message = '*알림을 받을 차량을 설정하세요.*\n'\
+          + '알림을 설정하면 충전이 시작될 때 메시지로 알려줍니다.'
+  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_start')
+  keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_CHRGSTART_SELECT
+
+def REMIND_ChrgStart_Set(update, context):
+  # Logging Conversation
+  convLog(update, convLogger)
+
+  veh_id, veh_name, variable = None, None, 0
+
+  # Get Vehicle Name in Text
+  if '\U0001F6CE' in str(update.message.text):
+    veh_name, variable = str(update.message.text).split(' \U0001F6CE ')[0], 1
+  elif '\U000023F3' in str(update.message.text):
+    veh_name, variable = str(update.message.text).split(' \U000023F3 ')[0], 0
+
+  if veh_name:
+    for i in sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_id', 'vehicle_name']):
+      if i[1] == veh_name: veh_id = i[0]
+    
+    if veh_id:
+      if sql.modifyVehicle(update.message.chat_id, veh_id, ['reminder_charge_start'], [variable]):
+        message = '\U0001F31F *설정이 완료되었습니다.*'
+        update.message.reply_text(message, parse_mode = 'Markdown')
+
+        return REMIND_ChrgStart_SelectVeh(update, context, True)
+      
+      else: message = '\U000026A0 *설정에 실패했습니다.*\n잠시 후 다시 시도해주세요.'
+    
+    else: message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
+                  + '차량 이름을 변경하셨다면 계정 및 연동 설정에서 토큰을 갱신하고 다시 시도해주세요.'
+    
+  else: message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
+                + '차량 이름을 변경하셨다면 계정 및 연동 설정에서 토큰을 갱신하고 다시 시도해주세요.'
+
+  keyboard = [['\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_CHRGSTART_BACK
+
+def REMIND_ChrgStart_Help(update, context):
+  # Logging Conversation
+  convLog(update, convLogger)
+
+  # Message
+  message = '\U0001F9D0 *충전 시작 알림이란?*\n충전기를 언제 연결했든 상관 없이 '\
+          + '*실제로 충전이 시작되면 알림을 보내드리는 기능입니다.*\n'\
+          + '데스티네이션 차저나 전용 완속 충전기가 있는 환경에서 유용하게 사용할 수 있습니다.'
+  keyboard = [['\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_CHRGSTART_BACK
 
 # Reminder - Charging Complete Alert
 def REMIND_ChrgComplete_SelectVeh(update, context, rtn = None):
@@ -340,8 +407,8 @@ def REMIND_ChrgComplete_SelectVeh(update, context, rtn = None):
     convLog(update, convLogger)
 
   # Message
-  message = '*충전 완료 알림을 받을 차량을 설정하세요.*\n'\
-          + '충전 완료 10분 전, 5분 전 및 충전이 완료되었을 때 알려줍니다.'
+  message = '*알림을 받을 차량을 설정하세요.*\n'\
+          + '알림을 설정하면 충전 완료 10분 전, 5분 전 및 충전이 완료되었을 때 알려줍니다.'
   keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_complete')
   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
@@ -395,7 +462,7 @@ def REMIND_ChrgComplete_Help(update, context):
   # Message
   message = '\U0001F9D0 *충전 완료 알림이란?*\n충전이 완료되기까지 남은 시간을 계산하여 '\
           + '*충전 완료 10분 전, 5분 전 및 충전이 완료되었을 때 알림을 보내드리는 기능입니다.*\n'\
-          + '슈퍼차저나 급속 충전기에서 잠깐 자리를 비웠을 때 유용하게 사용할 수 있습니다.\n'\
+          + '슈퍼차징이나 급속 충전 중에 잠깐 자리를 비웠을 때 유용하게 사용할 수 있습니다.\n'\
           + '또한, 충전 완료 알림 기능을 켜고 충전 목표량을 100%로 설정 후 충전 완료 상태가 되면 '\
           + '현재 가용 가능한 주행 거리가 저장되며, 이는 계정 및 연동 설정에서 확인할 수 있습니다.'
   keyboard = [['\U0001F519 돌아가기']]
@@ -412,13 +479,16 @@ def REMIND_ChrgTime_SelectVeh(update, context, rtn = None):
     convLog(update, convLogger)
 
   # Message
-  message = '*경부하 충전 알림을 받을 차량을 설정하세요.*\n'\
-          + '공용 충전기의 경우, 반드시 충전기가 여유로운 주거지에서만 사용하여 주시고, 충전 에티켓을 준수하여 주시기 바랍니다.'
+  message = '*알림을 받을 차량을 설정하세요.*\n'\
+          + '알림을 설정하면 월~토요일 오후 11시에 충전 대기 상태인 경우 메시지로 알려줍니다.\n'
   keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_time')
   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+  
+  message = '\U000026A0 공용 충전기의 경우, 반드시 충전기가 여유로운 환경에서만 사용하여 주시고 충전 에티켓을 준수하여 주시기 바랍니다.'
+  update.message.reply_text(message, parse_mode = 'Markdown')
 
   return REMIND_CHRGTIME_SELECT
 
@@ -485,7 +555,7 @@ def SCHEDL_Menu(update, context):
   convLog(update, convLogger)
 
   # Message
-  message = '이용하실 메뉴를 선택해주세요\U0001F636'
+  message = '스케줄링 메뉴에요\U0001F636'
   keyboard = [['감시모드 자동화', '절전 방지 스케줄링']]
   keyboard += [['\U0001F519 돌아가기']]
 
@@ -505,7 +575,7 @@ class Sentry:
       convLog(update, convLogger)
 
     # Message
-    message = '이용하실 메뉴를 선택해주세요\U0001F636'
+    message = '감시모드 자동화 메뉴에요\U0001F636'
     keyboard = [['스케줄 추가', '스케줄 삭제']]
     keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
@@ -881,7 +951,7 @@ class PreventSleep:
       convLog(update, convLogger)
 
     # Message
-    message = '이용하실 메뉴를 선택해주세요\U0001F636'
+    message = '절전 방지 스케줄링 메뉴에요\U0001F636'
     keyboard = [['스케줄 추가', '스케줄 삭제']]
     keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
@@ -1295,7 +1365,7 @@ def NEAR_Execution(update, context):
     message_id = editable_msg.message_id, chat_id = update.message.chat_id)
   
   if _chargers == 429:
-    message = '\U000026A0 *정보를 가져올 수 없습니다.*\n너무 잦은 시도로 인해 서버 측 요청이 거부되었습니다. 잠시 후 다시 시도해보세요.'
+    message = '\U000026A0 *정보를 가져올 수 없습니다.*\n너무 잦은 시도로 인해 서버 요청이 거부되었습니다. 잠시 후 다시 시도해보세요.'
     keyboard = [['\U0001F519 돌아가기']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -1318,28 +1388,38 @@ def NEAR_Execution(update, context):
 
   try:
     # Message
-    message = ''
+    reply_markup = InlineKeyboardMarkup([])
+
     for i in superchargers:
+      i['name'] = i['name'].replace(' - ', ' ')
       i['name'] = i['name'].replace('-', ' ')
       i['url_name'] = i['name'].replace(' ', '')
 
       if not i['site_closed']:
-        message += '<b>' + i['name'] + ' 슈퍼차저</b>  '
-        message += '<a href="https://apis.openapi.sk.com/tmap/app/routes?appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&name='
-        message += i['url_name'] + '슈퍼차저&lon=' + str(i['location']['long']) + '&lat=' + str(i['location']['lat']) + '">' + '[TMAP]</a>\n'
-        message += str(i['total_stalls']) + '기 중 ' + str(i['available_stalls']) + '기 사용 가능  '
-        message += str(round(i['distance_miles']*1.609344, 1)) + 'km\n'
+        reply_markup['inline_keyboard'].append([InlineKeyboardButton(
+          text = i['name'] + '(' + str(i['available_stalls']) + '/' + str(i['total_stalls']) + ') ' + str(round(i['distance_miles']*1.609344, 1)) + 'km',
+          url = 'https://apis.openapi.sk.com/tmap/app/routes?appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&name='
+              + i['url_name'] + '슈퍼차저&lon=' + str(i['location']['long']) + '&lat=' + str(i['location']['lat']))])
+      
+      else:
+        reply_markup['inline_keyboard'].append([InlineKeyboardButton(
+          text = i['name'] + '  \U000026A0 이용 불가',
+          url = 'https://apis.openapi.sk.com/tmap/app/routes?appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&name='
+              + i['url_name'] + '슈퍼차저&lon=' + str(i['location']['long']) + '&lat=' + str(i['location']['lat']))])
 
-      else: message += '\U000026A0 <b>' + i['name'] + '</b> ' + str(round(i['distance_miles']*1.609344, 1)) + 'km (점검 중)\n'
-    
-    message += '\n<b>데스티네이션 차저</b>\n'
-    for i in destinchargers:
-      i['url_name'] = i['name'].replace(' ', '')
+    update.message.reply_text('*슈퍼차저 정보를 알려드려요!*\n버튼을 클릭하면 TMAP으로 연결해요.', reply_markup = reply_markup, parse_mode = 'Markdown')
 
-      if round(i['distance_miles']*1.609344, 1) < 10:
-        message += '<a href="https://apis.openapi.sk.com/tmap/app/routes?appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&name='
+    if len(destinchargers) > 0:
+      message = '\n<b>데스티네이션차저 정보도 알려드릴게요:)</b>\n'
+      for i in destinchargers:
+        i['url_name'] = i['name'].replace(' ', '')
+
+        message += '\U0001F38D<a href="https://apis.openapi.sk.com/tmap/app/routes?appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&name='
         message += i['url_name'] + '&lon=' + str(i['location']['long']) + '&lat=' + str(i['location']['lat']) + '">' + i['name'] + '</a> '
         message += str(round(i['distance_miles']*1.609344, 1)) + 'km\n'
+    
+    else:
+      message = '\n<b>데스티네이션차저는 근처에 없어요:(</b>\n'
 
     keyboard = [['\U0001F519 돌아가기']]
 
@@ -1389,7 +1469,7 @@ def FIND_Location(update, context):
     context.bot.deleteMessage(
     message_id = editable_msg.message_id, chat_id = update.message.chat_id)
 
-    message = '\U000026A0 *위치 정보를 가져올 수 없습니다.*\n잠시 후 다시 시도해보세요.'
+    message = '\U000026A0 *위치 정보를 가져올 수 없습니다.*\n새로 가입한 시점에는 서버에 차량 정보를 가져오는 데 시간이 소요됩니다. 잠시 후 다시 시도해보세요.'
     keyboard = [['\U0001F519 돌아가기']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -1891,13 +1971,10 @@ def SETT_DefaultVehicle(update, context):
 
   return SETTING_DEFAULT_VEH
 
-# 주기적 깨우기 - 감시모드 통합
 # 문, 창문, 트렁크 열림 알림
 # 새로운 소프트웨어 업데이트 알림(그룹방, 누군가 업뎃한다면 알림 발송)
-# 절전 방지 - 잠에 들면 다시 깨우게
+# 절전 방지 - 시작시간 설정 X - 주기적으로 일정 시간 온라인 유지
 # 충전 중 감시모드 자동 활성화 - 충전 종료 후 감시모드 종료
-
-#https://apis.openapi.sk.com/tmap/staticMap?version=1&appKey=l7xx179f8d32ceeb4b608ce4e5f863684f1f&coordType=WGS84GEO&width=512&height=512&zoom=18&format=PNG&longitude=128.988343&latitude=35.219318&markers=128.988343,35.219318
 
 # Enable Classes
 Sentry_ = Sentry()
