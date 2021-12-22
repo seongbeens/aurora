@@ -270,19 +270,19 @@ def PREVENT_Sleep_Target():
   for tuples in sql.inquiryVehicles(['prevent_sleep_1', 'prevent_sleep_2']):
     for i in tuples[2:]:
       if i:
-        if len(i) == 6: 
-          if datetime.now().strftime('%H%M') == i[:4]: # 시간 체크
+        if len(i) == 13: 
+          if i[datetime.today().weekday()] == '1': # 요일 체크
+            if datetime.now().strftime('%H%M') == i[7:11]: # 시간 체크
+              _ThreadName, _ThreadExist = 'PSWAKE' + str(tuples[0]) + str(tuples[1]), False
 
-            _ThreadName, _ThreadExist = 'PSWAKE' + str(tuples[0]) + str(tuples[1]), False
+              for j in threading.enumerate():
+                if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
-            for j in threading.enumerate():
-              if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
-
-            if not _ThreadExist:
-              logger.info('Thread ' + _ThreadName + ' started.')
-              threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], int(i[4:]))).start()
-              time.sleep(0.1)
-              break
+              if not _ThreadExist:
+                logger.info('Thread ' + _ThreadName + ' started.')
+                threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], int(i[11:]))).start()
+                time.sleep(0.1)
+                break
 
 def PREVENT_Sleep(chat_id, veh_id, remain_time):
   logger.info('PREVENT_Sleep: just running. (range: 0)')
