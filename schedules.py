@@ -97,32 +97,19 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a):
     __collect(chat_id, veh_id, data)
 
     # Reminder Charging Complete
-    if _a == 1: __chrgCheck(chat_id, veh_id, veh_name, data['charge_state'])        ##### 테스트 필요
+    if _a == 1: __chrgCheck(chat_id, veh_id, veh_name, data['charge_state'])
 
-    # Idle Mode                                                 ##### 테스트 필요
+    # Idle Mode
     if (not data['vehicle_state']['is_user_present']) & \
        (not data['vehicle_state']['sentry_mode']) & \
        (not data['charge_state']['charging_state'] == 'Charging'):
-      logger.debug(
-        'VEHSTAT: Idle Mode Entering. ({}, {})'
+      logger.info(
+        'VEHSTAT: Enter Idle mode. ({}, {})'
         .format(str(chat_id), str(veh_id)))
-      time.sleep(900) #15min.
+      time.sleep(900) # 15 min
       logger.debug(
-        'VEHSTAT: Idle Mode Exit. ({}, {})'
+        'VEHSTAT: Exit Idle mode. ({}, {})'
         .format(str(chat_id), str(veh_id)))
-
-    '''
-    # Idle Mode(기존)
-    if not data['drive_state']['shift_state'] in ['D', 'N', 'R']:
-      if not data['vehicle_state']['sentry_mode']:
-        for i in range(3):
-          time.sleep(30)
-          _position = getDriveState(chat_id, veh_id)
-          if not ((data['drive_state']['latitude'] == _position['latitude'])
-                & (data['drive_state']['longitude'] == _position['longitude'])): return
-        
-        time.sleep(1110)
-    '''
 
   else: 
     logger.debug(
@@ -150,6 +137,15 @@ def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
     existing_charge_limit_soc = data['charge_limit_soc']
   else: return
 
+  # Notification of Start Charging
+  if sql.inquiryVehicle(chat_id, veh_id, ['reminder_charge_start'])[0] == 1:
+    if data['charging_state'] == 'Charging':
+      bot.send_message(chat_id = chat_id,
+        text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
+             + '충전 목표량은 *' + str(data['charge_limit_soc']) + '%*로 설정되어 있어요.', parse_mode = 'Markdown')
+      logger.info('__chrgCheck: Start Charging. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+
+  # Notification of Charging Completion
   while True:
     if existing_charge_limit_soc != data['charge_limit_soc']:
       existing_charge_limit_soc, msg_10min, msg_5min = data['charge_limit_soc'], False, False
@@ -159,34 +155,34 @@ def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
         if msg_10min == False:
           bot.send_message(chat_id = chat_id,
             text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 10분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('REMIND_ChrgComplete_Alert: bot.send_message(' + str(chat_id) + ', ' + str(veh_id) + ') 10 miniutes left.')
+          logger.info('__chrgCheck: 10 min left. (' + str(chat_id) + ', ' + str(veh_id) + ')')
           msg_10min = True
 
       elif data['minutes_to_full_charge'] == 5:
         if msg_5min == False:
           bot.send_message(chat_id = chat_id,
             text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 5분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('REMIND_ChrgComplete_Alert: bot.send_message(' + str(chat_id) + ', ' + str(veh_id) + ') 5 miniutes left.')
+          logger.info('__chrgCheck: 5 min left. (' + str(chat_id) + ', ' + str(veh_id) + ')')
           msg_5min = True
 
     elif data['charging_state'] == 'Stopped':
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 중지되었습니다.', parse_mode = 'Markdown')
-      logger.info('REMIND_ChrgComplete_Alert: bot.send_message(' + str(chat_id) + ', ' + str(veh_id) + ') charge stopped.')
+      logger.info('__chrgCheck: Charging stopped. (' + str(chat_id) + ', ' + str(veh_id) + ')')
       break     ##### 테스트 필요
 
     elif data['charging_state'] == 'Complete':
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 완료되었습니다.', parse_mode = 'Markdown')
-      logger.info('REMIND_ChrgComplete_Alert: bot.send_message(' + str(chat_id) + ', ' + str(veh_id) + ') charge completed.')
+      logger.info('__chrgCheck: Charging Completed. (' + str(chat_id) + ', ' + str(veh_id) + ')')
       if data['charge_limit_soc'] == data['battery_level'] == 100: # 100% Battery Range ModifyVehicle
         sql.modifyVehicle(chat_id, veh_id, ['battery_range'], [round(data['battery_range']*1.609344, 1)])
-        logger.info('REMIND_ChrgComplete_Alert: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') 100-percent battery_range updated.')
+        logger.info('__chrgCheck: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') 100-percent battery_range updated.')
       break     ##### 테스트 필요
 
     elif data['charging_state'] in ['Disconnected', 'NoPower']: break
 
-    else: logger.error('REMIND_ChrgComplete_Alert: Unkown charging_state: {}({}, {})'.format(data['charging_state']), str(chat_id), str(veh_id))
+    else: logger.error('__chrgCheck: Unknown charging_state: {} ({}, {})'.format(data['charging_state']), str(chat_id), str(veh_id))
 
     time.sleep(30)
     data = getChargeState(chat_id, veh_id)
