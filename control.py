@@ -92,10 +92,11 @@ def menu(update, context, rtn = False):
     convLog(update, convLogger)
 
   # Message
-  message = '*아래의 커맨드로 차량을 컨트롤할 수 있습니다.*\n토글 메뉴의 경우 컨펌 없이 바로 동작하니 선택에 유의하시기 바랍니다.'
+  message = '커맨드 앤 컨트롤 메뉴에요\U0001F636'
   keyboard = [['차량 잠그고 열기', '창문 환기 또는 닫기'],
-              ['감시모드 켜고 끄기', '소프트웨어 업데이트'],
+              ['감시모드 켜고 끄기', '헤드라이트 점멸'],
               ['공조기 켜고 끄기', '공조기 온도 설정'],
+              ['충전구 열고 닫기', '충전포트 잠금 해제'],
               ['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
               # ['시트 열선 설정', '스티어링 휠 열선 설정'],
@@ -112,10 +113,9 @@ def start(update, context):
 
   if update.message.text in [
     '차량 잠그고 열기', '창문 환기 또는 닫기',
-    '감시모드 켜고 끄기', '소프트웨어 업데이트',
+    '감시모드 켜고 끄기', '헤드라이트 점멸',
     '공조기 켜고 끄기', '공조기 온도 설정',
-    '시트 열선 설정', '스티어링 휠 열선 설정',
-    '충전구 열고 닫기', '충전 목표량 설정']: return verify(update, context, update.message.text)
+    '충전구 열고 닫기', '충전포트 잠금 해제']: return verify(update, context, update.message.text)
   else:
     message = '\U000026A0 *올바르지 않은 메뉴입니다.1*'
     keyboard = [['\U0001F519 돌아가기']]
@@ -148,20 +148,16 @@ def verify(update, context, command, editable_msg = None):
         return window_vent_close(update, context, veh_id, editable_msg)
       elif command == '감시모드 켜고 끄기':
         return sentry_on_off(update, context, veh_id, editable_msg)
-      elif command == '소프트웨어 업데이트':
-        return software_update(update, context, veh_id, editable_msg)
+      elif command == '헤드라이트 점멸':
+        return flash_headlight(update, context, veh_id, editable_msg)
       elif command == '공조기 켜고 끄기':
         return HVAC_on_off(update, context, veh_id, editable_msg)
       elif command == '공조기 온도 설정':
         return Temperatures.input(update, context, veh_id, editable_msg)
-      elif command == '시트 열선 설정':
-        return charge_limit_set(update, context, veh_id, editable_msg)
-      elif command == '스티어링 휠 열선 설정':
-        return charge_limit_set(update, context, veh_id, editable_msg)
       elif command == '충전구 열고 닫기':
-        return charge_limit_set(update, context, veh_id, editable_msg)
-      elif command == '충전 목표량 설정':
-        return charge_limit_set(update, context, veh_id, editable_msg)
+        return chargeport_door(update, context, veh_id, editable_msg)
+      elif command == '충전포트 잠금 해제':
+        return chargeport_unlock(update, context, veh_id, editable_msg)
       else:
         return unknown(update, context, veh_id, editable_msg)
       
@@ -287,61 +283,19 @@ def sentry_on_off(update, context, veh_id, editable_msg):
 
   else: return failed()
 
-def software_update(update, context, veh_id, editable_msg):
-  _data = getVehicleState(update.message.chat_id, veh_id)
-  
-  if not _data:
-    message = '\U000026A0 *데이터를 가져올 수 없습니다.*\n일시적인 통신 불량일 수 있습니다.\n'\
-            + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
-    keyboard = [['\U0001F519 돌아가기']]
-
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-    update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+def flash_headlight(update, context, veh_id, editable_msg):
+  if flashlights(update.message.chat_id, veh_id):
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
     
-    return GOTO_MENU
+    # Message
+    message = '\U0001F31F *헤드라이트가 점멸했습니다.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+    
+    return menu(update, context, True)
 
-  if _data['software_update']['status'] == 'downloading':
-    message = '\U0001F199 *소프트웨어 업데이트 다운로드 중! ('\
-            + str(_data['software_update']['download_perc'])\
-            + '%)*\n'\
-            + str(_data['software_update']['version'])\
-            + ' 버전 소프트웨어를 다운로드하고 있어요:)\n'\
-            + '다운로드가 완료되면 오로라에서 업데이트를 실행할 수 있답니다\U0001F929\n'\
-            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
-
-  elif _data['software_update']['status'] == 'available':
-    message = '\U0001F199 *소프트웨어 업데이트가 가능해요!*\n'\
-            + str(_data['software_update']['version'])\
-            + ' 버전 소프트웨어가 준비되었습니다:)\n'\
-            + '멋있고 신비로운 기능을 기대하면서 Tesla 앱에서 업데이트를 진행해보세요\U0001F929\n'\
-            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
-
-  elif _data['software_update']['status'] == 'scheduled':
-    message = '\U0001F199 *소프트웨어 업데이트가 곧 시작됩니다!*\n'\
-            + str(_data['software_update']['version'])\
-            + ' 버전으로 곧 업데이트될 거에요:)\n이번 업데이트는 '\
-            + str(_data['software_update']['expected_duration_sec']//60)\
-            + '분 정도 소요된답니다\U0001F929\n'\
-            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
-
-  elif _data['software_update']['status'] == 'installing':
-    message = '\U0001F199 *소프트웨어 업데이트 진행 중! ('\
-            + str(_data['software_update']['install_perc'])\
-            + '%)*\n'\
-            + str(_data['software_update']['version'])\
-            + ' 버전으로 업데이트하고 있습니다:)\n'\
-            + '업데이트 중에는 절대 주행하지 마세요\U0000203C\n'
-  
-  else:
-    message = '*사용 가능한 업데이트가 없습니다.*\n'\
-            + '차량의 터치 스크린에서 컨트롤 - 소프트웨어 메뉴를 탭하고 우선 업데이트로 설정하면 사용 가능한 업데이트를 즉시 가져올 수 있습니다.'
-  
-  # Delete Loading Message
-  context.bot.deleteMessage(
-    message_id = editable_msg.message_id, chat_id = update.message.chat_id)
-
-  update.message.reply_text(message, parse_mode = 'Markdown')
-  return menu(update, context, True)
+  else: return failed()  
 
 def HVAC_on_off(update, context, veh_id, editable_msg):
   _a = HVACToggle(update.message.chat_id, veh_id)
@@ -514,22 +468,70 @@ class Temperature:
       return menu(update, context, True)
 
 
-def charge_limit_set(update, context, veh_id, editable_msg):
-  # Delete Loading Message
-  context.bot.deleteMessage(
-    message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+def chargeport_door(update, context, veh_id, editable_msg):
+  _a = portToggle(update.message.chat_id, veh_id)
   
-  # Message
-  message = '\U000026A0 *기능 준비 중입니다.*\n빠른 시일 내 준비하겠습니다.'
-  keyboard = [['\U0001F519 돌아가기']]
+  if _a == 1: # Turn Open
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+    
+    # Message
+    message = '\U0001F31F *충전구가 열렸습니다.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+    
+    return menu(update, context, True)
 
-  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+  elif _a == 0: # Turn Close
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
 
-  return GOTO_MENU
+    # Message
+    message = '\U0001F31F *충전구가 닫혔습니다.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
 
-  message = '충전 목표량 설정 메뉴입니다.'
-  update.message.reply_text(message, parse_mode = 'Markdown')
+    return menu(update, context, True)
+
+  elif _a == -1: # Latched
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+
+    # Message
+    message = '\U000026A0 *충전기가 연결되어 있습니다.*\n충전구를 닫으려면 충전기를 분리해주세요.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    return menu(update, context, True)
+
+  else: return failed()
+
+def chargeport_unlock(update, context, veh_id, editable_msg):
+  _a = portUnlock(update.message.chat_id, veh_id)
+  
+  if _a == 1: # Unlock
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+    
+    # Message
+    message = '\U0001F31F *충전포트 잠금이 풀렸습니다.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+    
+    return menu(update, context, True)
+
+  elif _a == 0: # Invalid Condition
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+    
+    # Message
+    message = '\U000026A0 *충전기가 연결되어 있지 않습니다.*\n충전기가 연결된 충전포트를 잠금 해제할 수 있습니다.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+    
+    return menu(update, context, True)
+
+  else: return failed()
 
 def failed(update, context, veh_id, editable_msg = None):
   if editable_msg:
@@ -559,17 +561,18 @@ def help(update, context):
 
   # Message
   message = '\U0001F9D0 *토글 메뉴가 무엇인가요?*\n'\
-        + '끄고 켜는 전원 스위치처럼 0 아니면 1로만 동작하는 형태를 토글이라고 합니다.\n'\
-        + '예를 들어, \'차량 잠그고 열기\'는 차량 도어를 잠그거나 잠금을 해제하는 것 이외의 옵션이 없죠?\n'\
+        + '끄고 켜는 전원 스위치처럼 동작하는 형태를 토글이라고 합니다.\n'\
+        + '예를 들어, \'차량 잠그고 열기\'는 차량 도어를 잠그거나 잠금을 해제하는 것 이외의 옵션이 없어요.\n'\
         + '반면, 공조기의 온도를 설정할 때는 18도, 21도, 24도 등 우리가 원하는 온도 값으로 맞추어야 해요.\n'\
-        + '이러한 형태는 토글이라고 부르지 않는답니다.\n도움이 되셨나요?'
+        + '이러한 토글 기능을 실행할 때는 사용자가 버튼을 누를 때 곧 바로 실행돼요.'
   keyboard = [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
   message = '\U0001F9D0 *더 많은 커맨드가 필요하시나요?*\n'\
-          + '일반 유저가 제일 많이 사용하는 커맨드를 구현시켜 놓았어요:)\n'\
+          + '테슬라 오로라 유저들이 제일 많이 사용하는 커맨드를 구현시켜 놓았어요:)\n'\
+          + '커맨드는 사용자의 선호도에 따라 언제든 추가 또는 삭제가 이루어질 수 있어요.\n'\
           + '많은 사람들에게 꼭 필요한 커맨드가 있다고 생각드실 때 언제든 @TeslaAurora 로 문의해주세요!'
   update.message.reply_text(message, parse_mode = 'Markdown')
 

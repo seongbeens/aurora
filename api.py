@@ -81,11 +81,31 @@ def __lock(id, token):
 		time.sleep(3)
 	return False
 
+def __window(id, token, command, lat = 0, lon = 0):
+	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/window_control'.format(id)
+	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
+	for _ in range(0, 5):
+		r = requests.post(url, headers = headers, data = {'command': command, 'lat': lat, 'lon': lon})
+		d = json.loads(r.content)['response']['result']
+		if d is True: return True
+		time.sleep(3)
+	return False
+
 def __sentry(id, token, bools):
 	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/set_sentry_mode'.format(id)
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers, data = {'on': bools})
+		d = json.loads(r.content)['response']['result']
+		if d is True: return True
+		time.sleep(3)
+	return False
+
+def __flashlights(id, token):
+	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/flash_lights'.format(id)
+	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
+	for _ in range(0, 5):
+		r = requests.post(url, headers = headers)
 		d = json.loads(r.content)['response']['result']
 		if d is True: return True
 		time.sleep(3)
@@ -112,11 +132,11 @@ def __temps(id, token, value):
 		time.sleep(3)
 	return False
 
-def __window(id, token, command, lat = 0, lon = 0):
-	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/window_control'.format(id)
+def __port(id, token, togg):
+	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/charge_port_door_'.format(id) + togg
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
-		r = requests.post(url, headers = headers, data = {'command': command, 'lat': lat, 'lon': lon})
+		r = requests.post(url, headers = headers)
 		d = json.loads(r.content)['response']['result']
 		if d is True: return True
 		time.sleep(3)
@@ -313,6 +333,32 @@ def lockToggle(chat_id, veh_id):
 		errorLogger.critical(e, exc_info = False)
 		return False
 
+def windowToggle(chat_id, veh_id):
+	try:
+		token = __inquiryToken(chat_id)
+
+		for _ in range(0, 9):
+			_data = __data_request(veh_id, token, 'vehicle_state')
+			if _data: break
+
+		if _data:
+			if ((_data['fd_window'] == 0) & (_data['fp_window'] == 0)
+			  & (_data['rd_window'] == 0) & (_data['rp_window'] == 0)):
+				if __window(veh_id, token, 'vent'): return 1
+				else: return False
+			else:
+				for _ in range(0, 9):
+					_data = __data_request(veh_id, token, 'drive_state')
+					if _data: break
+				if __window(veh_id, token, 'close',
+					_data['latitude'], _data['longitude']): return 0
+				else: return False
+		else: return False
+
+	except Exception as e:
+		errorLogger.critical(e, exc_info = False)
+		return False
+
 def sentryToggle(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
@@ -329,6 +375,17 @@ def sentryToggle(chat_id, veh_id):
 				if __sentry(veh_id, token, False): return 0
 				else: return False
 			else: return False
+		else: return False
+
+	except Exception as e:
+		errorLogger.critical(e, exc_info = False)
+		return False
+
+def flashlights(chat_id, veh_id):
+	try:
+		token = __inquiryToken(chat_id)
+
+		if __flashlights(veh_id, token): return True
 		else: return False
 
 	except Exception as e:
@@ -372,26 +429,43 @@ def setHVACTemp(chat_id, veh_id, value):
 		errorLogger.critical(e, exc_info = False)
 		return False
 
-def windowToggle(chat_id, veh_id):
+def portToggle(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_state')
+			_data = __data_request(veh_id, token, 'charge_state')
 			if _data: break
 
 		if _data:
-			if ((_data['fd_window'] == 0) & (_data['fp_window'] == 0)
-			  & (_data['rd_window'] == 0) & (_data['rp_window'] == 0)):
-				if __window(veh_id, token, 'vent'): return 1
+			if not _data['charge_port_door_open']:
+				if __port(veh_id, token, 'open'): return 1
 				else: return False
-			else:
-				for _ in range(0, 9):
-					_data = __data_request(veh_id, token, 'drive_state')
-					if _data: break
-				if __window(veh_id, token, 'close',
-					_data['latitude'], _data['longitude']): return 0
+			elif _data['charge_port_door_open']:
+				if _data['charging_state'] == 'Disconnected':
+					if __port(veh_id, token, 'close'): return 0
+					else: return False
+				else: return -1
+			else: return False
+		else: return False
+
+	except Exception as e:
+		errorLogger.critical(e, exc_info = False)
+		return False
+
+def portUnlock(chat_id, veh_id):
+	try:
+		token = __inquiryToken(chat_id)
+
+		for _ in range(0, 9):
+			_data = __data_request(veh_id, token, 'charge_state')
+			if _data: break
+
+		if _data:
+			if _data['charge_port_door_open']:
+				if __port(veh_id, token, 'open'): return 1
 				else: return False
+			else: return 0
 		else: return False
 
 	except Exception as e:
