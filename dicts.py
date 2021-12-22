@@ -85,33 +85,64 @@ car_type = {
 }
 
 trim_badging = {
+    "75d": "75D",
+    "90d": "90D",
+    "p90d": "P90D",
     "100d": "100D",
     "p100d": "P100D",
-    "50": "스탠다드",
+    "50": "스탠다드 레인지",
+    "74": "롱 레인지 RWD",
     "74d": "롱 레인지",
     "p74d": "퍼포먼스",
 }
 
 exterior_color = {
+    "Pearl": "펄 화이트 멀티코트", #모델SX
     "PearlWhite": "펄 화이트 멀티코트",
-    "SolidBlack": "솔리드 블랙",
-    "MidnightSilver": "미드나잇 실버 메탈릭",
+    "PearlWhiteMulticoat": "펄 화이트 멀티코트", #모델SX
+    "SolidWhite": "솔리드 화이트",
+    "White": "솔리드 화이트",
+
+    "SignatureBlue": "시그니처 블루", #모델SX
+    "MetallicBlue": "메탈릭 블루", #모델SX
     "DeepBlue": "딥 블루 메탈릭",
+    "DeepBlueMetallic": "딥 블루 메탈릭",
+
+    "SignatureRed": "시그니처 레드", #모델SX
     "RedMulticoat": "레드 멀티코트",
-    "SteelGrey": "스틸 그레이",
+    "Red": "레드 멀티코트",
+    
+    "SteelGrey": "미드나잇 실버", #모델SX
+    "SilverMetallic": "실버 메탈릭",
+    "MidnightSilver": "미드나잇 실버 메탈릭",
+    "MidnightSilverMetallic": "미드나잇 실버 메탈릭",
+
+    "ObsidianBlack": "옵시디언 블랙",
+    "SolidBlack": "솔리드 블랙",
+    "MetallicBlack": "메탈릭 블랙",
+
+    "DolphinGrey": "돌핀 그레이",
 }
 
 wheel_type = {
+    "Turbine19": "19인치 터빈 휠",
+    "AeroTurbine19": "19인치 슬립스트림 휠", #모델S
+    "AeroTurbine20": "20인치 슬립스트림 휠", #모델X
+    "AeroTurbine22": "22인치 실버 터빈 휠", #모델X
+    "Super21Gray": "21인치 카본 터빈 휠", #모델S
+    "Arachnid21Grey": "21인치 아라크니드 휠", #모델S
     "Pinwheel18": "18인치 에어로 휠",
     "PinwheelRefresh18": "18인치 에어로 휠",
     "Pinwheel18CapKit": "18인치 캡킷",
     "Apollo19": "19인치 제미니 휠",
+    "Sportwheel19": "19인치 스포츠 휠",
     "Stiletto19": "19인치 스포츠 휠", #모3 20년식 19인치 휠
     "StilettoRefresh19": "19인치 스포츠 휠",
+    "Stiletto20": "20인치 퍼포먼스 휠",
+    "Performancewheel20": "20인치 퍼포먼 스 휠", #모3 20년식 퍼포먼스 휠
     "Stiletto20DarkSquare": "20인치", #모3 20년식 퍼포먼스 휠
     "UberTurbine20Gunpowder": "20인치 건파우더 휠", #모3 21년식 퍼포먼스 휠
     "Induction20Black": "20인치 인덕션 휠",
-    "Super21Gray": "21인치 휠", #모델S
 }
 
 map_info = {
