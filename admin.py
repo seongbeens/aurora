@@ -52,6 +52,33 @@ def build_menu(buttons):
 
     return menu
 
+class Report:
+  def result(self, update, context):
+    if adminAuthentication(update.message.chat_id):
+      # Counts Vars
+      counts_allUsers, counts_actualUsers, counts_vehicles = 0, 0, 0
+
+      for i in sql.inquiryAccounts(['vehicle_counts']):
+        if not None in i:
+          if i[1] > 0:
+            counts_allUsers += 1
+            counts_actualUsers += 1
+          else:
+            counts_allUsers += 1
+        else:
+          counts_allUsers += 1
+
+      for i in sql.inquiryVehicles():
+        counts_vehicles += 1
+
+      update.message.reply_text('가입한 전체 회원은 *{}명*,\n실제 사용자 수는 *{}명*,\n등록된 차량 대수는 *{}대*입니다.'
+        .format(str(counts_allUsers), str(counts_actualUsers), str(counts_vehicles)), parse_mode = 'Markdown')
+
+      return ConversationHandler.END
+    
+    else: return ConversationHandler.END
+
+
 class Notice:
   def input(self, update, context):
     if adminAuthentication(update.message.chat_id):
@@ -79,20 +106,20 @@ class Notice:
                                     chat_id = update.callback_query.message.chat_id,
                                     message_id = update.callback_query.message.message_id)
 
-        for i in sql.inquiryAccounts():
-          if not i in ['']:
-            try:
-              reply_markup = ReplyKeyboardMarkup(
-                [['\U0001F920 다시 시작하기']], one_time_keyboard = True, resize_keyboard = True)
-              bot.send_message(chat_id = i[0],
-                # text = '\U0001F389 *업데이트 내용을 안내드립니다.*\n' + self.message, parse_mode = 'Markdown')
-                text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
-              
-              logger.info('bot.send_message({}) Successfully.'.format(str(i[0])))
-              time.sleep(0.1)
-            except Exception as e:
-              print(e)
+        for i in sql.inquiryAccounts(['vehicle_counts']):
+          if not None in i:
+            if i[1] > 0:
+              try:
+                reply_markup = ReplyKeyboardMarkup(
+                  [['\U0001F920 다시 시작하기']], one_time_keyboard = True, resize_keyboard = True)
+                bot.send_message(chat_id = i[0],
+                  text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
+                logger.info('Sending message. ({})'.format(str(i[0])))
+                time.sleep(0.01)
+              except Exception as e:
+                logger.warning(e)
           
+        logger.info('Done sending messages.')
         text = '*전송이 완료되었습니다.*'
     
       else:
@@ -125,6 +152,7 @@ Noti = Notice()
 
 test_conv_handler = ConversationHandler(
   entry_points = [CommandHandler('notice', Noti.input, pass_args = True),
+                  CommandHandler('report', Report().result, pass_args = True),
                   CommandHandler('doc', sendDoc, pass_args = True)],
   states = {
     NOTI_INPUT:
