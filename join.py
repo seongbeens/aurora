@@ -277,7 +277,8 @@ def verifyToken(update, context):
                 message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
                 editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-                message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929'
+                message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
+                        + '오로라에서는 유저들의 정보 공유를 위해 소통방을 운영하고 있습니다:) @TeslaAurora 를 눌러 소통방에 들어와보세요!'
                 keyboard = [['\U0001F920']]
 
                 reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -288,7 +289,7 @@ def verifyToken(update, context):
               # Failed modifyAccount()
               else:
                 # Message
-                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
                 update.message.reply_text(message, parse_mode = 'Markdown')
                             
                 return ConversationHandler.END
@@ -296,7 +297,7 @@ def verifyToken(update, context):
           # Failed Write Token
           else:
             # Message
-            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
             update.message.reply_text(message, parse_mode = 'Markdown')
                         
             return ConversationHandler.END
@@ -304,7 +305,7 @@ def verifyToken(update, context):
         # Failed createVehID
         else:
           # Message
-          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
                     
           return ConversationHandler.END
@@ -312,7 +313,7 @@ def verifyToken(update, context):
       # Failed modifyAccount | countVeh
       else:
         # Message
-        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
                 
         return ConversationHandler.END
@@ -324,7 +325,7 @@ def verifyToken(update, context):
       editable_msg.edit_text(message, parse_mode = 'Markdown')
 
       message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
-              + '지속적으로 오류가 발생한다면 @TeslaAurora 로 문의해주세요.'
+              + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
       update.message.reply_text(message, parse_mode = 'Markdown')
                     
       message = '*Refresh Token을 입력해주세요.*'
@@ -337,7 +338,7 @@ def verifyToken(update, context):
     editable_msg.edit_text(message, parse_mode = 'Markdown')
 
     message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
-            + '지속적으로 오류가 발생한다면 @TeslaAurora 로 문의해주세요.'
+            + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
     update.message.reply_text(message, parse_mode = 'Markdown')
                 
     message = '*Refresh Token을 입력해주세요.*'
@@ -373,7 +374,8 @@ def verifyVehicle(update, context):
         message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-        message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929'
+        message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
+                + '오로라에서는 유저들의 정보 공유를 위해 소통방을 운영하고 있습니다:) @TeslaAurora 를 눌러 소통방에 들어와보세요!'
         keyboard = [['\U0001F920']]
 
         reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -384,7 +386,7 @@ def verifyVehicle(update, context):
       # Failed modifyAccount()
       else:
         # Message
-        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
         
         return ConversationHandler.END
@@ -393,7 +395,7 @@ def verifyVehicle(update, context):
       # Message
       #context.bot.deleteMessage(message_id = editable_msg.message_id, chat_id = update.message.chat_id)
       message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
-              + '아래 버튼에 표시되는 차량 이름이 올바르지 않다면 @TeslaAurora 로 문의해주세요.'
+              + '아래 버튼에 표시되는 차량 이름이 올바르지 않다면 @TeslaAuroraCS 로 문의해주세요.'
       editable_msg.edit_text(message, parse_mode = 'Markdown')
 
       message = '*차량을 선택해주세요.*'
@@ -436,7 +438,7 @@ def verifyVehicle(update, context):
         elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
         else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
 
-      message += '@TeslaAurora 로 문의해주세요.'
+      message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
 
       context.bot.deleteMessage(

@@ -44,7 +44,7 @@ def __getVehicle(update, context, editable_msg):
         message_id = editable_msg.message_id, chat_id = update.message.chat_id)
 
       message = '\U000026A0 *알 수 없는 오류가 발생했어요.*\n'\
-              + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAurora 로 문의해주세요.\n'\
+              + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAuroraCS 로 문의해주세요.\n'\
               + '불편을 끼쳐 드려서 죄송합니다.\n\n'\
               + '\__getVehicle.veh_\__state.params.error: {}_\n'.format(veh_state)
       keyboard = [['\U0001F519 돌아가기']]
@@ -65,7 +65,7 @@ def __getVehicle(update, context, editable_msg):
       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
     
     message = '\U000026A0 *알 수 없는 오류가 발생했어요.*\n'\
-            + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAurora 로 문의해주세요.\n'\
+            + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAuroraCS 로 문의해주세요.\n'\
             + '\__getVehicle.veh_\__id.return.error_\n'\
             + '\__getVehicle.veh_\__state.return.error_\n'
     keyboard = [['\U0001F519 돌아가기']]
@@ -187,7 +187,7 @@ def verify(update, context, command, editable_msg = None):
         elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VC\_TOKEN\_GEN\_7\n'
         elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VC\_TOKEN\_GEN\_8\n'
         else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VC\_TOKEN\_GEN\_9\n'
-      message += '@TeslaAurora 로 문의해주세요.'
+      message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
 
       context.bot.deleteMessage(
@@ -551,7 +551,7 @@ def failed(update, context, veh_id, editable_msg = None):
 
   # Message
   message = '\U000026A0 *명령을 완료할 수 없습니다.*\n일시적인 통신 불량일 수 있습니다.\n'\
-          + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
+          + '오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
   keyboard = [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -584,7 +584,7 @@ def help(update, context):
   message = '\U0001F9D0 *더 많은 커맨드가 필요하시나요?*\n'\
           + '테슬라 오로라 유저들이 제일 많이 사용하는 커맨드를 구현시켜 놓았어요:)\n'\
           + '커맨드는 사용자의 선호도에 따라 언제든 추가 또는 삭제가 이루어질 수 있어요.\n'\
-          + '많은 사람들에게 꼭 필요한 커맨드가 있다고 생각드실 때 언제든 @TeslaAurora 로 문의해주세요!'
+          + '많은 사람들에게 꼭 필요한 커맨드가 있다고 생각드실 때 언제든 @TeslaAuroraCS 로 문의해주세요!'
   update.message.reply_text(message, parse_mode = 'Markdown')
 
   return CONT_BACK
