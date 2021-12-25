@@ -185,8 +185,9 @@ def STAT_Execution(update, context, veh_id, editable_msg):
     message += '{}.\n'.format(state[vehData['state']])
   message += '\U0001F50B 배터리는 {}%이고, '.format(vehData['charge_state']['battery_level'])
   message += '{}km 갈 수 있어요.\n'.format(round(vehData['charge_state']['battery_range']*1.609344))
-  message += '\U00002600 외부 기온은 {}도, '.format(vehData['climate_state']['outside_temp'])
-  message += '실내는 {}도에요.\n'.format(vehData['climate_state']['inside_temp'])
+  if not vehData['climate_state']['outside_temp'] is None:
+    message += '\U00002600 외부 기온은 {}도, '.format(vehData['climate_state']['outside_temp'])
+    message += '실내는 {}도에요.\n'.format(vehData['climate_state']['inside_temp'])
   message += '{}'.format(is_climate_on[vehData['climate_state']['is_climate_on']])
   if vehData['climate_state']['is_climate_on']:
     message += '{}단계에요.\n'.format(vehData['climate_state']['fan_status'])
