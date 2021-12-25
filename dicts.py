@@ -126,6 +126,7 @@ exterior_color = {
 
 wheel_type = {
     "Turbine19": "19인치 터빈 휠",
+    "Slipstream19Carbon": "19인치 슬립스트림 카본 휠", #모델S
     "AeroTurbine19": "19인치 슬립스트림 휠", #모델S
     "AeroTurbine20": "20인치 슬립스트림 휠", #모델X
     "AeroTurbine22": "22인치 실버 터빈 휠", #모델X
@@ -139,8 +140,8 @@ wheel_type = {
     "Stiletto19": "19인치 스포츠 휠", #모3 20년식 19인치 휠
     "StilettoRefresh19": "19인치 스포츠 휠",
     "Stiletto20": "20인치 퍼포먼스 휠",
-    "Performancewheel20": "20인치 퍼포먼 스 휠", #모3 20년식 퍼포먼스 휠
-    "Stiletto20DarkSquare": "20인치", #모3 20년식 퍼포먼스 휠
+    "Performancewheel20": "20인치 퍼포먼스 휠", #모3 20년식 퍼포먼스 휠
+    "Stiletto20DarkSquare": "20인치 퍼포먼스 휠", #모3 20년식 퍼포먼스 휠
     "UberTurbine20Gunpowder": "20인치 건파우더 휠", #모3 21년식 퍼포먼스 휠
     "Induction20Black": "20인치 인덕션 휠",
 }
