@@ -434,6 +434,14 @@ def portToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
+			_data = __data_request(veh_id, token, 'drive_state')
+			if _data: break
+
+		if _data:
+			if _data['shift_state'] in ['D', 'N', 'R']:
+				return -1
+		
+		for _ in range(0, 9):
 			_data = __data_request(veh_id, token, 'charge_state')
 			if _data: break
 
@@ -445,7 +453,7 @@ def portToggle(chat_id, veh_id):
 				if _data['charging_state'] == 'Disconnected':
 					if __port(veh_id, token, 'close'): return 0
 					else: return False
-				else: return -1
+				else: return -2
 			else: return False
 		else: return False
 
