@@ -109,15 +109,16 @@ class Notice:
         for i in sql.inquiryAccounts(['vehicle_counts']):
           if not None in i:
             if i[1] > 0:
-              try:
-                reply_markup = ReplyKeyboardMarkup(
-                  [['\U0001F920 다시 시작하기']], one_time_keyboard = True, resize_keyboard = True)
-                bot.send_message(chat_id = i[0],
-                  text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
-                logger.info('Sending message. ({})'.format(str(i[0])))
-                time.sleep(0.01)
-              except Exception as e:
-                logger.warning(e)
+              # if i[0] == 1704527105:
+                try:
+                  reply_markup = ReplyKeyboardMarkup(
+                    [['\U0001F920 다시 시작하기']], one_time_keyboard = True, resize_keyboard = True)
+                  bot.send_message(chat_id = i[0],
+                    text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown', disable_notification = True)
+                  logger.info('Sending message. ({})'.format(i[0]))
+                  time.sleep(0.01)
+                except Exception as e:
+                  logger.warning(e)
           
         logger.info('Done sending messages.')
         text = '*전송이 완료되었습니다.*'
