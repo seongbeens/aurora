@@ -146,9 +146,17 @@ wheel_type = {
     "Induction20Black": "20인치 인덕션 휠",
 }
 
-map_info = {
-    "ES": "Opción en desarrollo... ¡Pronto podrás ver el mapa de reportes!",
-    "EN": "Option in development... You'll be able to see the report-map soon!"
+dowor = {
+    "df": "운전석 도어가",
+    "dr": "운전석 2열 도어가",
+    "pf": "조수석 도어가",
+    "pr": "조수석 2열 도어가",
+    "fd_window": "운전석 창문이",
+    "rd_window": "운전석 2열 창문이",
+    "fp_window": "조수석 창문이",
+    "rp_window": "조수석 2열 창문이",
+    "ft": "프렁크가",
+    "rt": "트렁크가",
 }
 
 loc_request = {

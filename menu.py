@@ -47,7 +47,7 @@ def __getVehicle(update, context, editable_msg):
         message_id = editable_msg.message_id, chat_id = update.message.chat_id)
 
       message = '\U000026A0 *알 수 없는 오류가 발생했어요.*\n'\
-              + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAurora 로 문의해주세요.\n'\
+              + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAuroraCS 로 문의해주세요.\n'\
               + '불편을 끼쳐 드려서 죄송합니다.\n\n'\
               + '\__getVehicle.veh_\__state.params.error: {}_\n'.format(veh_state)
       keyboard = [['\U0001F519 돌아가기']]
@@ -68,7 +68,7 @@ def __getVehicle(update, context, editable_msg):
       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
     
     message = '\U000026A0 *알 수 없는 오류가 발생했어요.*\n'\
-            + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAurora 로 문의해주세요.\n'\
+            + '오류를 제보해주시면 조속히 해결하도록 하겠습니다.\n아래 오류코드를 캡처하여 @TeslaAuroraCS 로 문의해주세요.\n'\
             + '\__getVehicle.veh_\__id.return.error_\n'\
             + '\__getVehicle.veh_\__state.return.error_\n'
     keyboard = [['\U0001F519 돌아가기']]
@@ -142,7 +142,7 @@ def STAT_Verify(update, context, editable_msg = None):
         elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VS\_TOKEN\_GEN\_7\n'
         elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VS\_TOKEN\_GEN\_8\n'
         else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: VS\_TOKEN\_GEN\_9\n'
-      message += '@TeslaAurora 로 문의해주세요.'
+      message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
 
       context.bot.deleteMessage(
@@ -243,7 +243,7 @@ def STAT_Execution(update, context, veh_id, editable_msg):
             + '%)*\n'\
             + str(vehData['vehicle_state']['software_update']['version'])\
             + ' 버전 소프트웨어를 다운로드하고 있어요:)\n'\
-            + '다운로드가 완료되면 오로라에서 업데이트를 실행할 수 있답니다\U0001F929\n'\
+            + '다운로드가 완료되면 Tesla 앱에서 업데이트를 실행할 수 있답니다\U0001F929\n'\
             + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
     update.message.reply_text(message, parse_mode = 'Markdown')
 
@@ -283,7 +283,7 @@ def STAT_Help(update, context):
   message = '\U0001F9D0 *실시간으로 보여지는 정보가 다르나요?*\n'\
           + '테슬라 오로라는 최적화된 정보를 제공하기 위해 차량의 실시간 상태에 따라 노출되는 정보가 변경되기도 해요.\n'\
           + '예를 들어 충전 중일 때는 평소에 보이지 않던 충전 전류와 남은 시간에 대한 정보가 추가로 보이기도 하죠.\n'\
-          + '불편한 사항은 언제든 @TeslaAurora 로 문의주시면 적극 개선하도록 노력할게요!'
+          + '불편한 사항은 언제든 @TeslaAuroraCS 로 문의주시면 적극 개선하도록 노력할게요!'
   keyboard = [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -323,8 +323,8 @@ def REMIND_Menu(update, context):
   convLog(update, convLogger)
 
   # Message
-  message = '충전 알리미 메뉴에요\U0001F636'
-  keyboard = [['충전 시작 알림 설정', '충전 완료 알림 설정'], ['경부하 충전 알림 설정'], ['\U0001F519 돌아가기']]
+  message = '오로라 알리미 메뉴에요\U0001F636'
+  keyboard = [['충전 시작 알림 설정', '충전 완료 알림 설정'], ['경부하 충전 알림 설정', '도어/창문 열림 알림 설정'], ['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
@@ -340,7 +340,7 @@ def REMIND_ChrgStart_SelectVeh(update, context, rtn = None):
   # Message
   message = '*알림을 받을 차량을 설정하세요.*\n'\
           + '알림을 설정하면 충전이 시작될 때 메시지로 알려줍니다.'
-  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_start')
+  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'noti_chrgstart')
   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -365,7 +365,7 @@ def REMIND_ChrgStart_Set(update, context):
       if i[1] == veh_name: veh_id = i[0]
     
     if veh_id:
-      if sql.modifyVehicle(update.message.chat_id, veh_id, ['reminder_charge_start'], [variable]):
+      if sql.modifyVehicle(update.message.chat_id, veh_id, ['noti_chrgstart'], [variable]):
         message = '\U0001F31F *설정이 완료되었습니다.*'
         update.message.reply_text(message, parse_mode = 'Markdown')
 
@@ -410,7 +410,7 @@ def REMIND_ChrgComplete_SelectVeh(update, context, rtn = None):
   # Message
   message = '*알림을 받을 차량을 설정하세요.*\n'\
           + '알림을 설정하면 충전 완료 10분 전, 5분 전 및 충전이 완료되었을 때 알려줍니다.'
-  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_complete')
+  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'noti_chrgcomplete')
   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -435,7 +435,7 @@ def REMIND_ChrgComplete_Set(update, context):
       if i[1] == veh_name: veh_id = i[0]
     
     if veh_id:
-      if sql.modifyVehicle(update.message.chat_id, veh_id, ['reminder_charge_complete'], [variable]):
+      if sql.modifyVehicle(update.message.chat_id, veh_id, ['noti_chrgcomplete'], [variable]):
         message = '\U0001F31F *설정이 완료되었습니다.*'
         update.message.reply_text(message, parse_mode = 'Markdown')
 
@@ -482,7 +482,7 @@ def REMIND_ChrgTime_SelectVeh(update, context, rtn = None):
   # Message
   message = '*알림을 받을 차량을 설정하세요.*\n'\
           + '알림을 설정하면 월~토요일 오후 11시에 충전 대기 상태인 경우 메시지로 알려줍니다.\n'
-  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'reminder_charge_time')
+  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'noti_chrgtime')
   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -510,7 +510,7 @@ def REMIND_ChrgTime_Set(update, context):
       if i[1] == veh_name: veh_id = i[0]
     
     if veh_id:
-      if sql.modifyVehicle(update.message.chat_id, veh_id, ['reminder_charge_time'], [variable]):
+      if sql.modifyVehicle(update.message.chat_id, veh_id, ['noti_chrgtime'], [variable]):
         message = '\U0001F31F *설정이 완료되었습니다.*'
         update.message.reply_text(message, parse_mode = 'Markdown')
         
@@ -549,6 +549,75 @@ def REMIND_ChrgTime_Help(update, context):
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
   return REMIND_CHRGTIME_BACK
+
+# Reminder - Vent
+def REMIND_Vent_SelectVeh(update, context, rtn = None):
+  if not rtn:
+    # Logging Conversation
+    convLog(update, convLogger)
+
+  # Message
+  message = '*알림을 받을 차량을 설정하세요.*\n'\
+          + '알림을 설정하면 주차 중 도어나 창문이 열린 채 5분이 지속되면 메시지로 알려줍니다.\n'
+  keyboard = REMIND_KeyboardMarkup_vehicles(update, context, 'noti_vent')
+  keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_VENT_SELECT
+
+def REMIND_Vent_Set(update, context):
+  # Logging Conversation
+  convLog(update, convLogger)
+
+  veh_id, veh_name, variable = None, None, 0
+
+  # Get Vehicle Name in Text
+  if '\U0001F6CE' in str(update.message.text):
+    veh_name, variable = str(update.message.text).split(' \U0001F6CE ')[0], 1
+  elif '\U000023F3' in str(update.message.text):
+    veh_name, variable = str(update.message.text).split(' \U000023F3 ')[0], 0
+
+  if veh_name:
+    for i in sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_id', 'vehicle_name']):
+      if i[1] == veh_name: veh_id = i[0]
+    
+    if veh_id:
+      if sql.modifyVehicle(update.message.chat_id, veh_id, ['noti_vent'], [variable]):
+        message = '\U0001F31F *설정이 완료되었습니다.*'
+        update.message.reply_text(message, parse_mode = 'Markdown')
+        
+        return REMIND_Vent_SelectVeh(update, context, True)
+      
+      else: message = '\U000026A0 *설정에 실패했습니다.*\n잠시 후 다시 시도해주세요.'
+    
+    else: message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
+                  + '차량 이름을 변경하셨다면 계정 및 연동 설정에서 토큰을 갱신하고 다시 시도해주세요.'
+    
+  else: message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
+                + '차량 이름을 변경하셨다면 계정 및 연동 설정에서 토큰을 갱신하고 다시 시도해주세요.'
+
+  keyboard = [['\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_VENT_BACK
+
+def REMIND_Vent_Help(update, context):
+  # Logging Conversation
+  convLog(update, convLogger)
+
+  # Message
+  message = '\U0001F9D0 *도어/창문 열림 알림이란?*\n운전자가 없을 때 5분 이상 도어나 창문이 열려 있는 경우 '\
+          + '알림과 함께 열려 있는 도어들을 알려줍니다.'
+  keyboard = [['\U0001F519 돌아가기']]
+
+  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  return REMIND_VENT_BACK
 
 # Scheduling Menu
 def SCHEDL_Menu(update, context):
@@ -782,7 +851,7 @@ class Sentry:
       # Message
       message = '\U000026A0 *추가하던 스케줄을 찾을 수 없습니다.*\n'\
               + '일시적 오류일 수 있으니 처음부터 다시 진행해주세요.\n'\
-              + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
+              + '오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
 
       reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -1647,7 +1716,7 @@ def SETT_VerifyToken(update, context):
               # Failed modifyAccount()
               else:
                 # Message
-                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
                 update.message.reply_text(message, parse_mode = 'Markdown')
                             
                 return ConversationHandler.END
@@ -1655,7 +1724,7 @@ def SETT_VerifyToken(update, context):
           # Failed Write Token
           else:
             # Message
-            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
             update.message.reply_text(message, parse_mode = 'Markdown')
                         
             return ConversationHandler.END
@@ -1663,7 +1732,7 @@ def SETT_VerifyToken(update, context):
         # Failed createVehID
         else:
           # Message
-          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
                     
           return ConversationHandler.END
@@ -1671,7 +1740,7 @@ def SETT_VerifyToken(update, context):
       # Failed modifyAccount | countVeh
       else:
         # Message
-        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
                 
         return ConversationHandler.END
@@ -1683,7 +1752,7 @@ def SETT_VerifyToken(update, context):
       editable_msg.edit_text(message, parse_mode = 'Markdown')
 
       message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
-              + '지속적으로 오류가 발생한다면 @TeslaAurora 로 문의해주세요.'
+              + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
       update.message.reply_text(message, parse_mode = 'Markdown')
                     
       message = '*Refresh Token을 입력해주세요.*\n갱신을 취소하려면 \'취소\'를 입력하세요.'
@@ -1696,7 +1765,7 @@ def SETT_VerifyToken(update, context):
     editable_msg.edit_text(message, parse_mode = 'Markdown')
 
     message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
-            + '지속적으로 오류가 발생한다면 @TeslaAurora 로 문의해주세요.'
+            + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
     update.message.reply_text(message, parse_mode = 'Markdown')
                 
     message = '*Refresh Token을 입력해주세요.*\n갱신을 취소하려면 \'취소\'를 입력하세요.'
@@ -1740,7 +1809,7 @@ def SETT_VerifyVehicle(update, context):
       # Failed modifyAccount()
       else:
         # Message
-        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAurora 로 문의해주세요.'
+        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
         
         return ConversationHandler.END
@@ -1749,7 +1818,7 @@ def SETT_VerifyVehicle(update, context):
       # Message
       #context.bot.deleteMessage(message_id = editable_msg.message_id, chat_id = update.message.chat_id)
       message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
-              + '아래 버튼에 표시되는 차량 이름이 올바르지 않다면 @TeslaAurora 로 문의해주세요.'
+              + '아래 버튼에 표시되는 차량 이름이 올바르지 않다면 @TeslaAuroraCS 로 문의해주세요.'
       editable_msg.edit_text(message, parse_mode = 'Markdown')
 
       message = '*차량을 선택해주세요.*'
@@ -1792,7 +1861,7 @@ def SETT_VerifyVehicle(update, context):
         elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
         else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
 
-      message += '@TeslaAurora 로 문의해주세요.'
+      message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
 
       context.bot.deleteMessage(
@@ -1922,7 +1991,7 @@ def SETT_Withdrawal_Noti(update, context):
 
   # Message
   message = '*정말로 서비스를 탈퇴하시나요?*\n테슬라 오로라는 개인정보를 안전하게 보관하고 있으며, 서비스 제공 이외의 목적으로 절대 활용되지 않습니다.\n'\
-          + '앞으로 다양한 기능들이 추가될 예정이며, 불편한 점이 있으셨다면 @TeslaAurora 로 문의하실 수 있고, 개발자는 불편한 점의 빠른 개선을 위해 항상 적극적으로 노력하고 있습니다.\n'\
+          + '앞으로 다양한 기능들이 추가될 예정이며, 불편한 점이 있으셨다면 @TeslaAuroraCS 로 문의하실 수 있고, 개발자는 불편한 점의 빠른 개선을 위해 항상 적극적으로 노력하고 있습니다.\n'\
           + '그래도 서비스 탈퇴를 원하신다면, 아래 버튼을 눌러서 진행할 수 있으며 탈퇴 즉시 모든 개인정보와 차량 정보가 삭제됩니다.'
   keyboard = [['네, 탈퇴하겠습니다.'], ['\U0001F519 돌아가기']]
 
@@ -1945,7 +2014,7 @@ def SETT_Withdrawal_Done(update, context):
   
   except:
     # Message
-    message = '\U000026A0 *탈퇴 처리 중 오류가 발생했습니다.*\n오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
+    message = '\U000026A0 *탈퇴 처리 중 오류가 발생했습니다.*\n오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
     update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
 
     return ConversationHandler.END

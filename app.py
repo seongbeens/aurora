@@ -39,7 +39,7 @@ def start(update, context):
   else:
     # Verify Banned User
     if basics[0] == 1: 
-      message = '*서비스 이용이 제한되었습니다.*\n자세한 사항은 @TeslaAurora 로 문의해주세요.'
+      message = '*서비스 이용이 제한되었습니다.*\n자세한 사항은 @TeslaAuroraCS 로 문의해주세요.'
       update.message.reply_text(message, parse_mode = 'Markdown')
     
       return ConversationHandler.END
@@ -80,14 +80,17 @@ def mainMenu(update, context, rtn = None):
   vehicle_name = sql.inquiryVehicle(update.message.chat_id, default_vehicle, ['vehicle_name'])[0]
   vehicle_state = getVehCurrent(update.message.chat_id, default_vehicle)
 
-  message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*'.format(vehicle_name, state[vehicle_state])
+  message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*\n\n'.format(vehicle_name, state[vehicle_state])
   keyboard = [['\U0001F5F3 내 차 브리핑', '\U0001F697 커맨드 앤 컨트롤'],
-              ['\U0001F6A6 스케줄링', '\U000023F0 충전 알리미'],
+              ['\U0001F6A6 스케줄링', '\U000023F0 오로라 알리미'],
               ['\U00002734 내 차 찾기', '\U0001F3DD 근처 충전소 찾기'],
               ['\U00002699 계정 및 연동 설정']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+  
+  message = '\U0001F38A *오로라 사용자들을 위한 소통방이 생겼어요!*\n@TeslaAurora 를 눌러 그룹에 들어와보세요:)'
+  update.message.reply_text(message, parse_mode = 'Markdown')
 
   return MAIN_MENU
 
@@ -300,6 +303,7 @@ def main():
         MessageHandler(Filters.regex('^충전 시작 알림 설정$'), REMIND_ChrgStart_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^충전 완료 알림 설정$'), REMIND_ChrgComplete_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^경부하 충전 알림 설정$'), REMIND_ChrgTime_SelectVeh, run_async = True),
+        MessageHandler(Filters.regex('^도어/창문 열림 알림 설정$'), REMIND_Vent_SelectVeh, run_async = True),
         MessageHandler(Filters.regex('^\U0001F519'), mainMenu)],
       REMIND_CHRGSTART_SELECT:
         [CommandHandler('cancel', cancel),
@@ -331,6 +335,16 @@ def main():
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^\U0001F519'), REMIND_ChrgTime_SelectVeh, run_async = True)],
+      REMIND_VENT_SELECT:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(~Filters.regex('^(\U0001F3F7|\U0001F519)'), REMIND_Vent_Set, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F3F7'), REMIND_Vent_Help),
+        MessageHandler(Filters.regex('^\U0001F519'), REMIND_Menu)],
+      REMIND_VENT_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), REMIND_Vent_SelectVeh, run_async = True)],
 
       # SETTING
       SETTING_MENU:

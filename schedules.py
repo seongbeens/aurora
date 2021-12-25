@@ -3,7 +3,9 @@ import telegram
 import schedule
 import threading
 from datetime import datetime
+
 from api import *
+from dicts import *
 
 
 # Enable logging
@@ -14,7 +16,7 @@ logger.addHandler(SchedLogHandler)
 bot = telegram.Bot(token = telegram_token)
 
 # Common - Get Vehicles Configuration & Write into VEHICLES.CSV
-# Running Every Hour.
+# Running Every 30min.
 def COMMON_GetVehiclesConfig_Schedule():
   logger.debug('VEHCONF: Schedule has been executed.')
 
@@ -73,7 +75,7 @@ def COMMON_GetVehiclesState_Schedule():
   threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState_Target).start()
 
 def COMMON_GetVehiclesState_Target():
-  for tuples in sql.inquiryVehicles(['vehicle_name', 'reminder_charge_complete']):
+  for tuples in sql.inquiryVehicles(['vehicle_name', 'noti_vent', 'noti_chrgcomplete']):
     _ThreadName, _ThreadExist = 'VEHSTAT' + str(tuples[0]) + str(tuples[1]), False
 
     for i in threading.enumerate():
@@ -81,14 +83,14 @@ def COMMON_GetVehiclesState_Target():
 
     if not _ThreadExist:
       logger.debug('Thread ' + _ThreadName + ' started.')
-      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3])).start()
-      time.sleep(1)
+      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3], tuples[4])).start()
+      time.sleep(0.2)
 
-def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a):
+def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b):
   if getVehCurrent(chat_id, veh_id) == 'online':
-    logger.debug('VEHSTAT: getVehCurrent(' + str(chat_id) + ', ' + str(veh_id) + ') == online')
+    logger.debug('VEHSTAT: getVehCurrent({}, {}) == online'.format(chat_id, veh_id))
 
-    data = {'vehicle_state': '', 'drive_state': ''}
+    data = {'vehicle_state': '', 'charge_state': '', 'drive_state': ''}
     data['vehicle_state'] = getVehicleState(chat_id, veh_id)
     data['charge_state'] = getChargeState(chat_id, veh_id)
     data['drive_state'] = getDriveState(chat_id, veh_id)
@@ -96,25 +98,37 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a):
     # Collect Vehicle State
     __collect(chat_id, veh_id, data)
 
-    # Reminder Charging Complete
-    if _a == 1: __chrgCheck(chat_id, veh_id, veh_name, data['charge_state'])
+    # Checking if Door/Window is Open
+    if _a == 1:
+      t1 = threading.Thread(target = __ventCheck, args = (chat_id, veh_id, veh_name, data['vehicle_state']))
+      t1.start()
 
+    # Reminder Charging Complete
+    if _b == 1:
+      t2 = threading.Thread(target = __chrgCheck, args = (chat_id, veh_id, veh_name, data['charge_state']))
+      t2.start()
+
+    # Wait 'til Finish of Thread
+    if _a == 1: t1.join()
+    if _b == 1: t2.join()
+    
     # Idle Mode
-    if (not data['vehicle_state']['is_user_present']) & \
-       (not data['vehicle_state']['sentry_mode']) & \
-       (not data['charge_state']['charging_state'] == 'Charging'):
+    if  (data['vehicle_state']['locked']) & \
+    (not data['vehicle_state']['is_user_present']) & \
+    (not data['vehicle_state']['sentry_mode']) & \
+    (not data['charge_state']['charging_state'] == 'Charging'):
       logger.info(
         'VEHSTAT: Enter Idle mode. ({}, {})'
-        .format(str(chat_id), str(veh_id)))
+        .format(chat_id, veh_id)) ########################################### not str test
       time.sleep(900) # 15 min
       logger.debug(
         'VEHSTAT: Exit Idle mode. ({}, {})'
-        .format(str(chat_id), str(veh_id)))
+        .format(chat_id, veh_id))
 
   else: 
     logger.debug(
       'VEHSTAT: getVehCurrent({}, {}) != online'
-      .format(str(chat_id), str(veh_id)))
+      .format(chat_id, veh_id))
 
 def __collect(chat_id, veh_id, data):
     columns = ['odometer', 'car_version', 'latitude', 'longitude']
@@ -123,9 +137,61 @@ def __collect(chat_id, veh_id, data):
 
     # Update Vehicle Information
     if sql.modifyVehicle(chat_id, veh_id, columns, tuples):
-      logger.debug('VEHSTAT: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') Successfully.')
+      logger.debug('VEHSTAT: modifyVehicle({}, {}) Successfully.'.format(chat_id, veh_id))
     
-    else: logger.warning('VEHSTAT: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') Failed.')
+    else: logger.warning('VEHSTAT: modifyVehicle({}, {}) Failed.'.format(chat_id, veh_id))
+
+def __ventCheck(chat_id, veh_id, veh_name, data):
+  def fors(variety):
+    def execution():
+      data = getVehicleState(chat_id, veh_id)
+      for i in variety:
+        if data[i] == 0: variety.remove(i)
+
+    execution()
+    for i in range(4):
+      time.sleep(60)
+      execution()
+    
+    if len(variety) == 0: return
+
+    elif len(variety) == 1:
+      bot.send_message(chat_id = chat_id,
+        text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n' + dowor[variety[0]] + ' 열려 있습니다.', parse_mode = 'Markdown')
+      logger.info('__ventCheck: Alert the door/window is open. ({}, {})'.format(chat_id, veh_id))
+
+    else:
+      text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n아래의 도어 또는 윈도우가 열려 있어요.\n\n'
+      for i in variety: text += '\U00002796 {}\n'.format(dowor[i][:-1])
+      bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+      logger.info('__ventCheck: Alert the doors/windows are open. ({}, {})'.format(chat_id, veh_id))
+    
+    return
+
+  if data:
+    if data['is_user_present']: return
+    if ((data['df'] == 0) & (data['dr'] == 0) & (data['pf'] == 0) & (data['pr'] == 0)
+      & (data['fd_window'] == 0) & (data['rd_window'] == 0) & (data['fp_window'] == 0) & (data['rp_window'] == 0)
+      & (data['ft'] == 0) & (data['rt'] == 0)): return
+
+  else: return
+
+  variety = []
+
+  if not data['df'] == 0: variety.append('df')
+  if not data['dr'] == 0: variety.append('dr')
+  if not data['pf'] == 0: variety.append('pf')
+  if not data['pr'] == 0: variety.append('pr')
+
+  if not data['fd_window'] == 0: variety.append('fd_window')
+  if not data['rd_window'] == 0: variety.append('rd_window')
+  if not data['fp_window'] == 0: variety.append('fp_window')
+  if not data['rp_window'] == 0: variety.append('rp_window')
+
+  if not data['ft'] == 0: variety.append('ft')
+  if not data['rt'] == 0: variety.append('rt')
+
+  fors(variety)
 
 def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
   # Variables
@@ -138,7 +204,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
   else: return
 
   # Notification of Start Charging
-  if sql.inquiryVehicle(chat_id, veh_id, ['reminder_charge_start'])[0] == 1:
+  if sql.inquiryVehicle(chat_id, veh_id, ['noti_chrgstart'])[0] == 1:
     if data['charging_state'] == 'Charging':
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
@@ -198,7 +264,7 @@ def REMIND_ChrgTime_WakeVeh_Schedule():
   threading.Thread(name = _ThreadName, target = REMIND_ChrgTime_WakeVeh).start()
 
 def REMIND_ChrgTime_WakeVeh():
-  for tuples in sql.inquiryVehicles(['reminder_charge_time']):
+  for tuples in sql.inquiryVehicles(['noti_chrgtime']):
     if tuples[2] == 1:
       _ThreadName = 'CTWAKE' + str(tuples[0]) + str(tuples[1])
       logger.info('Thread ' + _ThreadName + ' started.')
@@ -216,7 +282,7 @@ def REMIND_ChrgTime_Schedule():
   threading.Thread(name = _ThreadName, target = REMIND_ChrgTime_Target).start()
 
 def REMIND_ChrgTime_Target():
-  for tuples in sql.inquiryVehicles(['vehicle_name', 'reminder_charge_time']):
+  for tuples in sql.inquiryVehicles(['vehicle_name', 'noti_chrgtime']):
     if tuples[3] == 1:
       _ThreadName = 'CHRGTIME' + str(tuples[0]) + str(tuples[1])
       logger.info('Thread ' + _ThreadName + ' started.')
@@ -346,22 +412,26 @@ def __schedules():
   # SENTRY_Switch_Schedule()
   # schedule.every().day.at('16:27').do(REMIND_ChrgComplete_Schedule)
 
-  schedule.every().hours.do(COMMON_GetVehiclesConfig_Schedule)
-  schedule.every(2).minutes.do(COMMON_GetVehiclesState_Schedule)
-  schedule.every().minutes.do(PREVENT_Sleep_Schedule)
-  schedule.every().minutes.do(SENTRY_Switch_Schedule)
+  schedule.every().hours.at('00:20').do(COMMON_GetVehiclesConfig_Schedule)
+  schedule.every().hours.at('30:20').do(COMMON_GetVehiclesConfig_Schedule)
+
+  schedule.every(2).minutes.at(':40').do(COMMON_GetVehiclesState_Schedule)
+
+  schedule.every().minutes.at(':00').do(PREVENT_Sleep_Schedule)
+  schedule.every().minutes.at(':00').do(SENTRY_Switch_Schedule)
 
   schedule.every().monday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
-  schedule.every().monday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().tuesday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
-  schedule.every().tuesday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().wednesday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
-  schedule.every().wednesday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().thursday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
-  schedule.every().thursday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().friday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
-  schedule.every().friday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().saturday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
+
+  schedule.every().monday.at('23:00').do(REMIND_ChrgTime_Schedule)
+  schedule.every().tuesday.at('23:00').do(REMIND_ChrgTime_Schedule)
+  schedule.every().wednesday.at('23:00').do(REMIND_ChrgTime_Schedule)
+  schedule.every().thursday.at('23:00').do(REMIND_ChrgTime_Schedule)
+  schedule.every().friday.at('23:00').do(REMIND_ChrgTime_Schedule)
   schedule.every().saturday.at('23:00').do(REMIND_ChrgTime_Schedule)
   
   while True:
@@ -371,5 +441,3 @@ def __schedules():
 if __name__ == '__main__':
   logger.info('Scheduler started.')
   __schedules()
-
-# 모든 스케줄 테스트 필요
