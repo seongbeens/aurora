@@ -493,7 +493,18 @@ def chargeport_door(update, context, veh_id, editable_msg):
 
     return menu(update, context, True)
 
-  elif _a == -1: # Latched
+  elif _a == -1: # Driving
+    # Delete Loading Message
+    context.bot.deleteMessage(
+      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+
+    # Message
+    message = '\U000026A0 *주행 중에는 충전구를 열 수 없습니다.*\n충전구를 열려면 기어가 P단이어야 합니다.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+    return menu(update, context, True)
+
+  elif _a == -2: # Latched
     # Delete Loading Message
     context.bot.deleteMessage(
       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
