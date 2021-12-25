@@ -117,9 +117,9 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b):
     (not data['vehicle_state']['is_user_present']) & \
     (not data['vehicle_state']['sentry_mode']) & \
     (not data['charge_state']['charging_state'] == 'Charging'):
-      logger.info(
+      logger.debug(
         'VEHSTAT: Enter Idle mode. ({}, {})'
-        .format(chat_id, veh_id)) ########################################### not str test
+        .format(chat_id, veh_id))
       time.sleep(900) # 15 min
       logger.debug(
         'VEHSTAT: Exit Idle mode. ({}, {})'
@@ -133,7 +133,7 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b):
 def __collect(chat_id, veh_id, data):
     columns = ['odometer', 'car_version', 'latitude', 'longitude']
     tuples = [round(data['vehicle_state']['odometer']*1.609344), data['vehicle_state']['car_version'].split()[0],
-                data['drive_state']['latitude'], data['drive_state']['longitude']]
+              data['drive_state']['latitude'], data['drive_state']['longitude']]
 
     # Update Vehicle Information
     if sql.modifyVehicle(chat_id, veh_id, columns, tuples):
@@ -155,13 +155,15 @@ def __ventCheck(chat_id, veh_id, veh_name, data):
     
     if len(variety) == 0: return
 
-    elif len(variety) == 1:
+    if getDriveState(chat_id, veh_id)['shift_state'] in ['R', 'N', 'D']: return
+    
+    if len(variety) == 1:
       bot.send_message(chat_id = chat_id,
         text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n' + dowor[variety[0]] + ' 열려 있습니다.', parse_mode = 'Markdown')
       logger.info('__ventCheck: Alert the door/window is open. ({}, {})'.format(chat_id, veh_id))
 
-    else:
-      text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n아래의 도어 또는 윈도우가 열려 있어요.\n\n'
+    elif len(variety) > 1:
+      text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n아래의 도어 또는 윈도우가 열려 있어요.\n'
       for i in variety: text += '\U00002796 {}\n'.format(dowor[i][:-1])
       bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
       logger.info('__ventCheck: Alert the doors/windows are open. ({}, {})'.format(chat_id, veh_id))
@@ -169,7 +171,6 @@ def __ventCheck(chat_id, veh_id, veh_name, data):
     return
 
   if data:
-    if data['is_user_present']: return
     if ((data['df'] == 0) & (data['dr'] == 0) & (data['pf'] == 0) & (data['pr'] == 0)
       & (data['fd_window'] == 0) & (data['rd_window'] == 0) & (data['fp_window'] == 0) & (data['rp_window'] == 0)
       & (data['ft'] == 0) & (data['rt'] == 0)): return
@@ -193,10 +194,9 @@ def __ventCheck(chat_id, veh_id, veh_name, data):
 
   fors(variety)
 
-def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
+def __chrgCheck(chat_id, veh_id, veh_name, data):
   # Variables
-  data = prev_data
-  msg_10min, msg_5min = False, False
+  msg_10min = msg_5min = False
 
   if data:
     if data['charging_state'] in ['Disconnected', 'NoPower', 'Stopped', 'Complete']: return
@@ -248,7 +248,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, prev_data):
 
     elif data['charging_state'] in ['Disconnected', 'NoPower']: break
 
-    else: logger.error('__chrgCheck: Unknown charging_state: {} ({}, {})'.format(data['charging_state']), str(chat_id), str(veh_id))
+    else: logger.error('__chrgCheck: Unknown charging_state: {} ({}, {})'.format(data['charging_state'], chat_id, veh_id))
 
     time.sleep(30)
     data = getChargeState(chat_id, veh_id)
