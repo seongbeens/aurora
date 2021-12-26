@@ -131,6 +131,7 @@ wheel_type = {
     "AeroTurbine20": "20인치 슬립스트림 휠", #모델X
     "AeroTurbine22": "22인치 실버 터빈 휠", #모델X
     "Super21Gray": "21인치 카본 터빈 휠", #모델S
+    "TwinTurbine21Carbon": "21인치 트윈 터빈 휠", #모델SX?
     "Arachnid21Grey": "21인치 아라크니드 휠", #모델S
     "Pinwheel18": "18인치 에어로 휠",
     "PinwheelRefresh18": "18인치 에어로 휠",
