@@ -215,7 +215,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, data, _start, _complete):
 
   # Notification of Start Charging
   if _start == 1:
-    if (data['charging_state'] == 'Starting') or (data['charging_state'] == 'Charging' & data['charge_energy_added'] < 1):
+    if (data['charging_state'] == 'Starting') or (data['charging_state'] == 'Charging' and data['charge_energy_added'] < 1):
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
              + '충전 목표량은 *' + str(data['charge_limit_soc']) + '%*로 설정되어 있어요.', parse_mode = 'Markdown')
