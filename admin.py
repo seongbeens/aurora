@@ -70,9 +70,17 @@ class Report:
 
       for i in sql.inquiryVehicles():
         counts_vehicles += 1
+      
+      try:
+        conn = sql.connect()
+        counts_todayUsers = conn.cursor().execute("SELECT * FROM Accounts "\
+        + "WHERE DATE(date_create) = CURRENT_DATE()")
+      
+      finally:
+        conn.close()
 
-      update.message.reply_text('가입한 전체 회원은 *{}명*,\n실제 사용자 수는 *{}명*,\n등록된 차량 대수는 *{}대*입니다.'
-        .format(str(counts_allUsers), str(counts_actualUsers), str(counts_vehicles)), parse_mode = 'Markdown')
+      update.message.reply_text('가입한 전체 회원은 *{}명*,\n실제 사용자 수는 *{}명*,\n오늘 가입자 수는 *{}명*,\n등록된 차량 대수는 *{}대*입니다.'
+        .format(str(counts_allUsers), str(counts_actualUsers), str(counts_todayUsers), str(counts_vehicles)), parse_mode = 'Markdown')
 
       return ConversationHandler.END
     
