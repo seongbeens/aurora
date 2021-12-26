@@ -407,7 +407,7 @@ def SENTRY_Switch(chat_id, veh_id, timestamps):
 
 # Execution
 def __schedules():
-  COMMON_GetVehiclesConfig_Schedule()
+  # COMMON_GetVehiclesConfig_Schedule()
   # COMMON_GetVehiclesState_Schedule()
   # SENTRY_Switch_Schedule()
   # schedule.every().day.at('16:27').do(REMIND_ChrgComplete_Schedule)
