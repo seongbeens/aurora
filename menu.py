@@ -1802,7 +1802,11 @@ class ChargeStop:
 
   def menu(slef, update, context):
     _veh_id = sql.inquiryAccount(update.message.chat_id, ['default_vehicle'])[0]
-    _value = sql.inquirySchedule(update.message.chat_id, _veh_id, ['chrg_stop_1'])[0]
+    try:
+      _value = sql.inquirySchedule(update.message.chat_id, _veh_id, ['chrg_stop_1'])[0]
+    except TypeError:
+      sql.modifySchedule(update.message.chat_id, _veh_id, ['chrg_stop_1'], [None])
+      return ChargeStop_.menu(update, context)
 
     if _value: return ChargeStop_.delConfirm(update, context, _value)
     else: return ChargeStop_.addTime(update, context)
