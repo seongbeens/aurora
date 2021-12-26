@@ -27,7 +27,7 @@ def COMMON_GetVehiclesConfig_Schedule():
 def COMMON_GetVehiclesConfig():
   def _getApi(_chat_id, _veh_id):
     if getVehCurrent(_chat_id, _veh_id) == 'online':
-      logger.debug('VEHCONF: getVehCurrent(' + str(_chat_id) + ', ' + str(_veh_id) + ') == online')
+      logger.debug('VEHCONF: getVehCurrent({}, {}) == online'.format(_chat_id, _veh_id))
 
       def _isNull(columns):
         for i in sql.inquiryVehicle(_chat_id, _veh_id, columns):
@@ -41,17 +41,17 @@ def COMMON_GetVehiclesConfig():
         _data = getVehicleConfig(_chat_id, _veh_id)
         if not _data: return
 
-        logger.debug('VEHCONF: getVehicleConfig(' + str(_chat_id) + ', ' + str(_veh_id) + ') Received.')
+        logger.debug('VEHCONF: getVehicleConfig({}, {}) Received.'.format(_chat_id, _veh_id))
         
         _tuples = [_data['car_type'], _data['trim_badging'], _data['efficiency_package'], _data['exterior_color'], _data['wheel_type']]
 
         if sql.modifyVehicle(_chat_id, _veh_id, _columns, _tuples):
-          logger.debug('VEHCONF: modifyVehicle(' + str(_chat_id) + ', ' + str(_veh_id) + ') Successfully.')
+          logger.debug('VEHCONF: modifyVehicle({}, {}) Successfully.'.format(_chat_id, _veh_id))
         
-        else: logger.warning('VEHCONF: modifyVehicle(' + str(_chat_id) + ', ' + str(_veh_id) + ') Failed.')
+        else: logger.warning('VEHCONF: modifyVehicle({}, {}) Failed.'.format(_chat_id, _veh_id))
       
     else: 
-      logger.debug('VEHCONF: getVehCurrent(' + str(_chat_id) + ', ' + str(_veh_id) + ') != online')
+      logger.debug('VEHCONF: getVehCurrent({}, {}) != online'.format(_chat_id, _veh_id))
 
   for tuples in sql.inquiryVehicles():
     _ThreadName, _ThreadExist = 'VEHCONF' + str(tuples[0]) + str(tuples[1]), False
@@ -160,13 +160,13 @@ def __ventCheck(chat_id, veh_id, veh_name, data):
     if len(variety) == 1:
       bot.send_message(chat_id = chat_id,
         text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n' + dowor[variety[0]] + ' 열려 있습니다.', parse_mode = 'Markdown')
-      logger.info('__ventCheck: Alert the door/window is open. ({}, {})'.format(chat_id, veh_id))
+      logger.info('__ventCheck: The Door/window is Open. ({}, {})'.format(chat_id, veh_id))
 
     elif len(variety) > 1:
       text = '\U0001F6A8 *' + str(veh_name) + '의 알림이에요!*\n아래의 도어 또는 윈도우가 열려 있어요.\n'
       for i in variety: text += '\U00002796 {}\n'.format(dowor[i][:-1])
       bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
-      logger.info('__ventCheck: Alert the doors/windows are open. ({}, {})'.format(chat_id, veh_id))
+      logger.info('__ventCheck: The Doors/windows are Open. ({}, {})'.format(chat_id, veh_id))
     
     return
 
@@ -209,7 +209,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, data):
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
              + '충전 목표량은 *' + str(data['charge_limit_soc']) + '%*로 설정되어 있어요.', parse_mode = 'Markdown')
-      logger.info('__chrgCheck: Start Charging. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+      logger.info('__chrgCheck: Start Charging. ({}, {})'.format(chat_id, veh_id))
 
   # Notification of Charging Completion
   while True:
@@ -221,20 +221,20 @@ def __chrgCheck(chat_id, veh_id, veh_name, data):
         if msg_10min == False:
           bot.send_message(chat_id = chat_id,
             text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 10분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('__chrgCheck: 10 min left. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+          logger.info('__chrgCheck: 10 min Left. ({}, {})'.format(chat_id, veh_id))
           msg_10min = True
 
       elif data['minutes_to_full_charge'] == 5:
         if msg_5min == False:
           bot.send_message(chat_id = chat_id,
             text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 5분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('__chrgCheck: 5 min left. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+          logger.info('__chrgCheck: 5 min Left. ({}, {})'.format(chat_id, veh_id))
           msg_5min = True
 
     elif data['charging_state'] == 'Stopped':
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 중지되었습니다.', parse_mode = 'Markdown')
-      logger.info('__chrgCheck: Charging stopped. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+      logger.info('__chrgCheck: Charging Stopped. ({}, {})'.format(chat_id, veh_id))
       break
 
     elif data['charging_state'] == 'Complete':
@@ -243,7 +243,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, data):
       logger.info('__chrgCheck: Charging Completed. (' + str(chat_id) + ', ' + str(veh_id) + ')')
       if data['charge_limit_soc'] == data['battery_level'] == 100: # 100% Battery Range ModifyVehicle
         sql.modifyVehicle(chat_id, veh_id, ['battery_range'], [round(data['battery_range']*1.609344, 1)])
-        logger.info('__chrgCheck: modifyVehicle(' + str(chat_id) + ', ' + str(veh_id) + ') 100-percent battery_range updated.')
+        logger.info('__chrgCheck: battery_range Updated. ({}, {})'.format(chat_id, veh_id))
       break
 
     elif data['charging_state'] in ['Disconnected', 'NoPower']: break
@@ -305,13 +305,13 @@ def REMIND_ChrgTime_Alert(chat_id, veh_id, veh_name):
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n오후 11시부터 경부하 전력 시간대입니다.\n충전 대기 중인 차량의 충전을 시작해주세요:)\n'
         text += '충전 목표량은 *' + str(_data['charge_limit_soc']) + '%*이고, 충전 전류는 *' + str(_data['charge_current_request']) + 'A*로 설정되어 있어요.'
         bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
-        logger.info('REMIND_ChrgTime_Alert: bot.send_message(' + str(chat_id) + ') sent successfully.')
+        logger.info('REMIND_ChrgTime_Alert: Sending Message. ({}, {})'.format(chat_id, veh_id))
       
       else:
-        logger.debug('REMIND_ChrgTime_Alert: charging_state(' + str(chat_id) + ', ' + str(veh_id) + ') != NoPower')
+        logger.debug('REMIND_ChrgTime_Alert: charging_state({}, {}) != NoPower'.format(chat_id, veh_id))
         #bot.send_message(chat_id = chat_id, text = str(charging_state))
     else:
-      logger.warning('REMIND_ChrgTime_Alert: getVehCurrent(' + str(chat_id) + ', ' + str(veh_id) + ') != online')
+      logger.warning('REMIND_ChrgTime_Alert: getVehCurrent({}, {}) != online'.format(chat_id, veh_id))
       #bot.send_message(chat_id = chat_id,
       #  text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n차량과의 연결에 실패했습니다.\n로그를 확인하시기 바랍니다.')
   
@@ -347,11 +347,11 @@ def PREVENT_Sleep_Target():
                 break
 
 def PREVENT_Sleep(chat_id, veh_id, remain_time):
-  logger.info('PREVENT_Sleep: just running. ({}, {}, range: 0)'.format(str(chat_id), str(veh_id)))
+  logger.info('PREVENT_Sleep: just running. ({}, {}, range: 0)'.format(chat_id, veh_id))
   threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
   for i in range(remain_time * 60 - 2):
-    time.sleep(59.99)
-    logger.info('PREVENT_Sleep: just running. ({}, {}, range: {})'.format(str(chat_id), str(veh_id), i + 1))
+    time.sleep(59.9)
+    logger.info('PREVENT_Sleep: just running. ({}, {}, range: {})'.format(chat_id, veh_id, i+1))
     threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
 
@@ -387,22 +387,22 @@ def SENTRY_Switch(chat_id, veh_id, timestamps):
   for i in timestamps:
     if i[datetime.today().weekday()] == '1': # 요일 체크
       if datetime.now().strftime('%H%M') == i[7:11]: # 시간 체크
-        for _ in range(10):
+        for j in range(10):
           if SentrySchedule(chat_id, veh_id, i[11]):
             _name = getVehName(chat_id, veh_id)
             text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n감시모드 자동화가 잘 동작했어요:)\n'
             bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
-            logger.info('SENTRY_Switch: Command successfully executed. ({}, {})'.format(str(chat_id), str(veh_id)))
+            logger.info('SENTRY_Switch: Command successfully executed. ({}, {})'.format(chat_id, veh_id))
             return
 
-          logger.warning('SENTRY_Switch: Command Retrying. ({}, {}, range: {})'.format(str(chat_id), str(veh_id), _))
+          logger.warning('SENTRY_Switch: Command Retrying. ({}, {}, range: {})'.format(chat_id, veh_id, j+1))
 
         text = '\U000026A0 *감시모드 자동화를 실패했습니다.*\n차량이 주행 중이거나 일시적인 통신 불량일 수 있습니다.\n'\
-             + '오류가 지속되는 경우 @TeslaAurora 로 문의해주세요.'
+             + '오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
         bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
         return
 
-  logger.debug('SENTRY_Switch: No schedule to execute. ({}, {})'.format(str(chat_id), str(veh_id)))
+  logger.debug('SENTRY_Switch: No schedule to execute. ({}, {})'.format(chat_id, veh_id))
 
 
 # Execution
