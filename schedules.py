@@ -215,13 +215,13 @@ def __chrgCheck(chat_id, veh_id, veh_name, data, _start, _complete):
 
   # Notification of Start Charging
   if _start == 1:
-    if (data['charging_state'] == 'Starting') or (data['charging_state'] == 'Charging' and data['charge_energy_added'] < 1):
+    if (data['charging_state'] == 'Starting') or (data['charging_state'] == 'Charging' and data['charge_energy_added'] == 0):
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
              + '충전 목표량은 *' + str(data['charge_limit_soc']) + '%*로 설정되어 있어요.', parse_mode = 'Markdown')
       logger.info('__chrgCheck: Start Charging. ({}, {})'.format(chat_id, veh_id))
-      time.sleep(30)
-      data = getChargeState(chat_id, veh_id)
+      time.sleep(180)
+      if _complete == 1: data = getChargeState(chat_id, veh_id)
 
   # Notification of Charging Completion
   if _complete == 1:
@@ -538,7 +538,7 @@ def __schedules():
   schedule.every().hours.at('00:20').do(COMMON_GetVehiclesConfig_Schedule)
   schedule.every().hours.at('30:20').do(COMMON_GetVehiclesConfig_Schedule)
 
-  schedule.every(2).minutes.at(':40').do(COMMON_GetVehiclesState_Schedule)
+  schedule.every().minutes.at(':30').do(COMMON_GetVehiclesState_Schedule)
 
   schedule.every().minutes.at(':00').do(PREVENT_Sleep_Schedule)
   schedule.every().minutes.at(':05').do(PreConditioning_Schedule)
