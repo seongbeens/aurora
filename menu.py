@@ -674,10 +674,11 @@ class Sentry:
 
   # SENTRY - Add Schedule
   def findValue(self, chat_id, veh_id, type):
-    columns = ['sentry_switch_1', 'sentry_switch_2',
-              'sentry_switch_3', 'sentry_switch_4', 'sentry_switch_5']
-
+    columns = ['sentry_switch_1', 'sentry_switch_2', 'sentry_switch_3', 'sentry_switch_4', 'sentry_switch_5']
     lists = sql.inquirySchedule(chat_id, veh_id, columns)
+
+    if not lists:
+      sql.modifySchedule(chat_id, veh_id, ['sentry_switch_1'], [None])
 
     if type == 'DAY':
       for i, j in enumerate(lists):
@@ -1055,6 +1056,9 @@ class PreventSleep:
   def findValue(self, chat_id, veh_id, type):
     columns = ['prevent_sleep_1', 'prevent_sleep_2']
     lists = sql.inquirySchedule(chat_id, veh_id, columns)
+
+    if not lists:
+      sql.modifySchedule(chat_id, veh_id, ['prevent_sleep_1'], [None])
 
     if type == 'DAY':
       for i, j in enumerate(lists):
@@ -1445,6 +1449,9 @@ class PreConditioning:
     columns = ['preconditioning_1', 'preconditioning_2', 'preconditioning_3', 'preconditioning_4', 'preconditioning_5']
     lists = sql.inquirySchedule(chat_id, veh_id, columns)
 
+    if not lists:
+      sql.modifySchedule(chat_id, veh_id, ['preconditioning_1'], [None])
+      
     if type == 'DAY':
       for i, j in enumerate(lists):
         if j:
