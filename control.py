@@ -306,6 +306,8 @@ def HVAC_on_off(update, context, veh_id, editable_msg):
     context.bot.deleteMessage(
       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
     
+    _a = str(_a).replace('.0', '')
+    
     # Message
     message = '\U0001F31F *공조기가 {}도로 켜졌습니다.*'.format(_a)
     update.message.reply_text(message, parse_mode = 'Markdown')
