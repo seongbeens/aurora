@@ -220,6 +220,8 @@ def main():
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^감시모드 자동화$'), Sentry_.menu),
         MessageHandler(Filters.regex('^절전 방지 스케줄링$'), PreventSleep_.menu),
+        MessageHandler(Filters.regex('^프리컨디셔닝 자동화$'), PreConditioning_.menu),
+        MessageHandler(Filters.regex('^충전 종료 시간 설정$'), ChargeStop_.menu),
         MessageHandler(Filters.regex('^\U0001F519'), mainMenu)],
 
       # SCHE - SENTRY
@@ -296,6 +298,60 @@ def main():
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^\U0001F519'), PreventSleep_.menu)],
       
+      # SCHE - PRECONDITIONING
+      PRECON_MENU:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^스케줄 추가$'), PreConditioning_.addDay),
+        MessageHandler(Filters.regex('^스케줄 삭제$'), PreConditioning_.delSelect, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F3F7'), PreConditioning_.help),
+        MessageHandler(Filters.regex('^\U0001F519'), SCHEDL_Menu)],
+      PRECON_ADD_DAY:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^[월화수목금토일]{1,7}$'), PreConditioning_.addTime),
+        MessageHandler(Filters.text, PreConditioning_.addDay_invalid),
+        CallbackQueryHandler(PreConditioning_.addCancel)],
+      PRECON_ADD_TIME:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([01][0-9]|2[0-3])([0-5][0-9])$'), PreConditioning_.addRemain),
+        MessageHandler(Filters.text, PreConditioning_.addTime_invalid),
+        CallbackQueryHandler(PreConditioning_.addCancel)],
+      PRECON_ADD_REMAIN:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([1-5][0-9]|60)$'), PreConditioning_.addDone),
+        MessageHandler(Filters.text, PreConditioning_.addRemain_invalid),
+        CallbackQueryHandler(PreConditioning_.addCancel)],
+      PRECON_DELETE:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^#[1-5]'), PreConditioning_.delDone),
+        MessageHandler(Filters.regex('^\U0001F519'), PreConditioning_.menu),
+        MessageHandler(Filters.text, PreConditioning_.del_invalid)],
+      PRECON_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), PreConditioning_.menu)],
+
+      # SCHE - CHARGE STOP
+      CHRGSTOP_ADD_TIME:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^([01][0-9]|2[0-3])([0-5][0-9])$'), ChargeStop_.addDone),
+        MessageHandler(Filters.text, ChargeStop_.addTime_invalid),
+        CallbackQueryHandler(ChargeStop_.addCancel)],
+      CHRGSTOP_DELETE:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^스케줄 삭제$'), ChargeStop_.delDone, run_async = True),
+        MessageHandler(Filters.regex('^\U0001F519'), SCHEDL_Menu)],
+      CHRGSTOP_BACK:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), SCHEDL_Menu)],
+      
       # REMIND
       REMIND_MENU:
         [CommandHandler('cancel', cancel),
@@ -351,7 +407,7 @@ def main():
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^내 차 정보$'), SETT_VehicleInfo),
-        MessageHandler(Filters.regex('^액세스 토큰 갱신$'), SETT_GetToken),
+        MessageHandler(Filters.regex('^테슬라 토큰 갱신$'), SETT_GetToken),
         MessageHandler(Filters.regex('^계정 정보 변경$'), SETT_Account),
         MessageHandler(Filters.regex('^자주 사용하는 차량 변경$'), SETT_DefaultVehicle),
         MessageHandler(Filters.regex('^\U0001F519'), start, run_async = True)],

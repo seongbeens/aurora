@@ -132,6 +132,28 @@ def __temps(id, token, value):
 		time.sleep(3)
 	return False
 
+def __precondition(id, token, bools):
+	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/set_preconditioning_max'.format(id)
+	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
+	for _ in range(0, 5):
+		r = requests.post(url, headers = headers, data = {'on': bools})
+		d = json.loads(r.content)['response']['result']
+		if d is True: return True
+		time.sleep(3)
+	return False
+
+def __charge_stop(id, token):
+	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/charge_stop'.format(id)
+	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
+	for _ in range(0, 5):
+		r = requests.post(url, headers = headers)
+		if not r.status_code == 200: return False # SLEEP(408)
+		d = json.loads(r.content)['response']
+		if d['result'] is True: return True
+		elif d['reason'] == 'not_charging': return False
+		time.sleep(3)
+	return False
+
 def __port(id, token, togg):
 	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/command/charge_port_door_'.format(id) + togg
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
@@ -171,7 +193,7 @@ def generateVehicles(chat_id, token): # 함수명 변경
 		return True
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('generateVehicles: ' + str(e), exc_info = False)
 		return False
 
 # GET
@@ -181,7 +203,7 @@ def getVehCounts(chat_id, token = None):
 		return __vehicles(token, 100)
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehCounts: ' + str(e), exc_info = False)
 		return False
 
 def getVehCurrent(chat_id, veh_id = None): #veh_id가 없으면 전체 vehicles 리스트 return
@@ -193,7 +215,7 @@ def getVehCurrent(chat_id, veh_id = None): #veh_id가 없으면 전체 vehicles 
 			return __state(veh_id, token, 'state')
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehCurrent: ' + str(e), exc_info = False)
 		return False
 
 def getVehName(chat_id, veh_id):
@@ -202,7 +224,7 @@ def getVehName(chat_id, veh_id):
 		return __state(veh_id, token, 'display_name')
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehName: ' + str(e), exc_info = False)
 		return False
 
 def getVehData(chat_id, veh_id):
@@ -214,7 +236,7 @@ def getVehData(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehData: ' + str(e), exc_info = False)
 		return False
 
 def getNearbyChrgSites(chat_id, veh_id):
@@ -223,7 +245,7 @@ def getNearbyChrgSites(chat_id, veh_id):
 		return __chrgsites(veh_id, token)
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getNearbyChrgSites: ' + str(e), exc_info = False)
 		return False
 
 # WAKE
@@ -234,7 +256,7 @@ def wakeVehicle(chat_id, veh_id): # 함수 분리
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('wakeVehicle: ' + str(e), exc_info = False)
 		return False
 
 def wakeVehicles(chat_id): # 함수 분리
@@ -246,7 +268,7 @@ def wakeVehicles(chat_id): # 함수 분리
 			return True
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('wakeVehicles: ' + str(e), exc_info = False)
 		return False
 
 # DATA_REQUEST
@@ -259,7 +281,7 @@ def getChargeState(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getChargeState: ' + str(e), exc_info = False)
 		return False
 
 def getClimateState(chat_id, veh_id):
@@ -271,7 +293,7 @@ def getClimateState(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getClimateState: ' + str(e), exc_info = False)
 		return False
 
 def getDriveState(chat_id, veh_id):
@@ -283,7 +305,7 @@ def getDriveState(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getDriveState: ' + str(e), exc_info = False)
 		return False
 
 def getVehicleConfig(chat_id, veh_id):
@@ -295,7 +317,7 @@ def getVehicleConfig(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehicleConfig: ' + str(e), exc_info = False)
 		return False
 
 def getVehicleState(chat_id, veh_id):
@@ -307,7 +329,7 @@ def getVehicleState(chat_id, veh_id):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('getVehicleState: ' + str(e), exc_info = False)
 		return False
 
 # COMMANDS
@@ -330,7 +352,7 @@ def lockToggle(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('lockToggle: ' + str(e), exc_info = False)
 		return False
 
 def windowToggle(chat_id, veh_id):
@@ -356,7 +378,7 @@ def windowToggle(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('windowToggle: ' + str(e), exc_info = False)
 		return False
 
 def sentryToggle(chat_id, veh_id):
@@ -378,7 +400,7 @@ def sentryToggle(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('sentryToggle: ' + str(e), exc_info = False)
 		return False
 
 def flashlights(chat_id, veh_id):
@@ -389,7 +411,7 @@ def flashlights(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('flashlights: ' + str(e), exc_info = False)
 		return False
 
 def HVACToggle(chat_id, veh_id):
@@ -413,7 +435,7 @@ def HVACToggle(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('HVACToggle: ' + str(e), exc_info = False)
 		return False
 
 def setHVACTemp(chat_id, veh_id, value):
@@ -426,7 +448,33 @@ def setHVACTemp(chat_id, veh_id, value):
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('setHVACTemp: ' + str(e), exc_info = False)
+		return False
+
+def preConditioning(chat_id, veh_id, switch):
+	try:
+		token = __inquiryToken(chat_id)
+
+		if switch:
+			if __precondition(veh_id, token, True): return True
+			else: return False
+		else:
+			if __precondition(veh_id, token, False): return True
+			else: return False
+
+	except Exception as e:
+		errorLogger.error('preConditioning: ' + str(e), exc_info = False)
+		return False
+
+def chargeStop(chat_id, veh_id):
+	try:
+		token = __inquiryToken(chat_id)
+
+		if __charge_stop(veh_id, token): return True
+		else: return False
+
+	except Exception as e:
+		errorLogger.error('chargeStop: ' + str(e), exc_info = False)
 		return False
 
 def portToggle(chat_id, veh_id):
@@ -458,7 +506,7 @@ def portToggle(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('portToggle: ' + str(e), exc_info = False)
 		return False
 
 def portUnlock(chat_id, veh_id):
@@ -477,30 +525,30 @@ def portUnlock(chat_id, veh_id):
 		else: return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('portUnlock: ' + str(e), exc_info = False)
 		return False
 
 
 # Schedule
-def SentrySchedule(chat_id, veh_id, switch):
+def sentrySchedule(chat_id, veh_id, switch):
 	try:
 		token = __inquiryToken(chat_id)
 
 		for _ in range(10):
 			if __wakeUp(veh_id, token): break
-			
-		if switch == '0':
-			for _ in range(10):
-				if __sentry(veh_id, token, False): return True
 		
 		if switch == '1':
 			for _ in range(10):
-				if __sentry(veh_id, token, True): return True
+				if __sentry(veh_id, token, True): return 1
+			
+		if switch == '0':
+			for _ in range(10):
+				if __sentry(veh_id, token, False): return 0
 		
 		return False
 
 	except Exception as e:
-		errorLogger.critical(e, exc_info = False)
+		errorLogger.error('sentrySchedule: ' + str(e), exc_info = False)
 		return False
 
 # Token

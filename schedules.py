@@ -71,11 +71,11 @@ def COMMON_GetVehiclesState_Schedule():
   logger.debug('VEHSTAT: Schedule has been executed.')
 
   _ThreadName = 'GetVehiclesStateSchedule'
-  logger.debug('Thread ' + _ThreadName + ' started.')
+  logger.info('Thread ' + _ThreadName + ' started.')
   threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState_Target).start()
 
 def COMMON_GetVehiclesState_Target():
-  for tuples in sql.inquiryVehicles(['vehicle_name', 'noti_vent', 'noti_chrgcomplete']):
+  for tuples in sql.inquiryVehicles(['vehicle_name', 'noti_vent', 'noti_chrgstart', 'noti_chrgcomplete']):
     _ThreadName, _ThreadExist = 'VEHSTAT' + str(tuples[0]) + str(tuples[1]), False
 
     for i in threading.enumerate():
@@ -83,10 +83,10 @@ def COMMON_GetVehiclesState_Target():
 
     if not _ThreadExist:
       logger.debug('Thread ' + _ThreadName + ' started.')
-      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3], tuples[4])).start()
-      time.sleep(0.2)
+      threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState, args = (tuples[0], tuples[1], tuples[2], tuples[3], tuples[4], tuples[5])).start()
+      time.sleep(0.1)
 
-def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b):
+def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
   if getVehCurrent(chat_id, veh_id) == 'online':
     logger.debug('VEHSTAT: getVehCurrent({}, {}) == online'.format(chat_id, veh_id))
 
@@ -100,23 +100,33 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b):
 
     # Checking if Door/Window is Open
     if _a == 1:
-      t1 = threading.Thread(target = __ventCheck, args = (chat_id, veh_id, veh_name, data['vehicle_state']))
-      t1.start()
+      _ThreadName, _ThreadExist = 'VENTCHK' + str(chat_id) + str(veh_id), False
+
+      for i in threading.enumerate():
+        if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+      
+      if not _ThreadExist:
+        logger.debug('Thread ' + _ThreadName + ' started.')
+        t1 = threading.Thread(name = _ThreadName, target = __ventCheck, args = (chat_id, veh_id, veh_name, data['vehicle_state']))
+        t1.start()
 
     # Reminder Charging Complete
-    if _b == 1:
-      t2 = threading.Thread(target = __chrgCheck, args = (chat_id, veh_id, veh_name, data['charge_state']))
-      t2.start()
+    if _b == 1 or _c == 1:
+      _ThreadName, _ThreadExist = 'CHRGCHK' + str(chat_id) + str(veh_id), False
 
-    # Wait 'til Finish of Thread
-    if _a == 1: t1.join()
-    if _b == 1: t2.join()
+      for i in threading.enumerate():
+        if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+      
+      if not _ThreadExist:
+        logger.debug('Thread ' + _ThreadName + ' started.')
+        t2 = threading.Thread(name = _ThreadName, target = __chrgCheck, args = (chat_id, veh_id, veh_name, data['charge_state'], _b, _c))
+        t2.start()
     
     # Idle Mode
     if  (data['vehicle_state']['locked']) & \
     (not data['vehicle_state']['is_user_present']) & \
     (not data['vehicle_state']['sentry_mode']) & \
-    (not data['charge_state']['charging_state'] == 'Charging'):
+    (not data['charge_state']['charging_state'] in ['Starting', 'Charging']):
       logger.debug(
         'VEHSTAT: Enter Idle mode. ({}, {})'
         .format(chat_id, veh_id))
@@ -194,7 +204,7 @@ def __ventCheck(chat_id, veh_id, veh_name, data):
 
   fors(variety)
 
-def __chrgCheck(chat_id, veh_id, veh_name, data):
+def __chrgCheck(chat_id, veh_id, veh_name, data, _start, _complete):
   # Variables
   msg_10min = msg_5min = False
 
@@ -204,54 +214,57 @@ def __chrgCheck(chat_id, veh_id, veh_name, data):
   else: return
 
   # Notification of Start Charging
-  if sql.inquiryVehicle(chat_id, veh_id, ['noti_chrgstart'])[0] == 1:
-    if data['charging_state'] == 'Charging':
+  if _start == 1:
+    if (data['charging_state'] == 'Starting') or (data['charging_state'] == 'Charging' & data['charging_state']['charge_energy_added'] < 1):
       bot.send_message(chat_id = chat_id,
         text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에서 충전이 시작되었습니다.\n'\
              + '충전 목표량은 *' + str(data['charge_limit_soc']) + '%*로 설정되어 있어요.', parse_mode = 'Markdown')
       logger.info('__chrgCheck: Start Charging. ({}, {})'.format(chat_id, veh_id))
+      time.sleep(30)
+      data = getChargeState(chat_id, veh_id)
 
   # Notification of Charging Completion
-  while True:
-    if existing_charge_limit_soc != data['charge_limit_soc']:
-      existing_charge_limit_soc, msg_10min, msg_5min = data['charge_limit_soc'], False, False
+  if _complete == 1:
+    while True:
+      if existing_charge_limit_soc != data['charge_limit_soc']:
+        existing_charge_limit_soc, msg_10min, msg_5min = data['charge_limit_soc'], False, False
 
-    if data['charging_state'] == 'Charging':
-      if data['minutes_to_full_charge'] == 10:
-        if msg_10min == False:
-          bot.send_message(chat_id = chat_id,
-            text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 10분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('__chrgCheck: 10 min Left. ({}, {})'.format(chat_id, veh_id))
-          msg_10min = True
+      if data['charging_state'] == 'Charging':
+        if data['minutes_to_full_charge'] == 10:
+          if msg_10min == False:
+            bot.send_message(chat_id = chat_id,
+              text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 10분 남았습니다.', parse_mode = 'Markdown')
+            logger.info('__chrgCheck: 10 min Left. ({}, {})'.format(chat_id, veh_id))
+            msg_10min = True
 
-      elif data['minutes_to_full_charge'] == 5:
-        if msg_5min == False:
-          bot.send_message(chat_id = chat_id,
-            text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 5분 남았습니다.', parse_mode = 'Markdown')
-          logger.info('__chrgCheck: 5 min Left. ({}, {})'.format(chat_id, veh_id))
-          msg_5min = True
+        elif data['minutes_to_full_charge'] == 5:
+          if msg_5min == False:
+            bot.send_message(chat_id = chat_id,
+              text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['charge_limit_soc']) + '% 충전 완료까지 5분 남았습니다.', parse_mode = 'Markdown')
+            logger.info('__chrgCheck: 5 min Left. ({}, {})'.format(chat_id, veh_id))
+            msg_5min = True
 
-    elif data['charging_state'] == 'Stopped':
-      bot.send_message(chat_id = chat_id,
-        text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 중지되었습니다.', parse_mode = 'Markdown')
-      logger.info('__chrgCheck: Charging Stopped. ({}, {})'.format(chat_id, veh_id))
-      break
+      elif data['charging_state'] == 'Stopped':
+        bot.send_message(chat_id = chat_id,
+          text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 중지되었습니다.', parse_mode = 'Markdown')
+        logger.info('__chrgCheck: Charging Stopped. ({}, {})'.format(chat_id, veh_id))
+        break
 
-    elif data['charging_state'] == 'Complete':
-      bot.send_message(chat_id = chat_id,
-        text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 완료되었습니다.', parse_mode = 'Markdown')
-      logger.info('__chrgCheck: Charging Completed. (' + str(chat_id) + ', ' + str(veh_id) + ')')
-      if data['charge_limit_soc'] == data['battery_level'] == 100: # 100% Battery Range ModifyVehicle
-        sql.modifyVehicle(chat_id, veh_id, ['battery_range'], [round(data['battery_range']*1.609344, 1)])
-        logger.info('__chrgCheck: battery_range Updated. ({}, {})'.format(chat_id, veh_id))
-      break
+      elif data['charging_state'] == 'Complete':
+        bot.send_message(chat_id = chat_id,
+          text = '\U0001F389 *' + str(veh_name) + '의 알림이에요!*\n' + str(data['battery_level']) + '%에 충전이 완료되었습니다.', parse_mode = 'Markdown')
+        logger.info('__chrgCheck: Charging Completed. (' + str(chat_id) + ', ' + str(veh_id) + ')')
+        if data['charge_limit_soc'] == data['battery_level'] == 100: # 100% Battery Range ModifyVehicle
+          sql.modifyVehicle(chat_id, veh_id, ['battery_range'], [round(data['battery_range']*1.609344, 1)])
+          logger.info('__chrgCheck: battery_range Updated. ({}, {})'.format(chat_id, veh_id))
+        break
 
-    elif data['charging_state'] in ['Disconnected', 'NoPower']: break
+      elif data['charging_state'] in ['Disconnected', 'NoPower']: break
 
-    else: logger.error('__chrgCheck: Unknown charging_state: {} ({}, {})'.format(data['charging_state'], chat_id, veh_id))
+      else: logger.error('__chrgCheck: Unknown charging_state: {} ({}, {})'.format(data['charging_state'], chat_id, veh_id))
 
-    time.sleep(30)
-    data = getChargeState(chat_id, veh_id)
+      time.sleep(30)
+      data = getChargeState(chat_id, veh_id)
 
 
 # Reminder - Charge Time Pre-wake Vehicle
@@ -329,7 +342,7 @@ def PREVENT_Sleep_Schedule():
   threading.Thread(name = _ThreadName, target = PREVENT_Sleep_Target).start()
 
 def PREVENT_Sleep_Target():
-  for tuples in sql.inquiryVehicles(['prevent_sleep_1', 'prevent_sleep_2']):
+  for tuples in sql.inquirySchedules(['prevent_sleep_1', 'prevent_sleep_2']):
     for i in tuples[2:]:
       if i:
         if len(i) == 13: 
@@ -350,9 +363,112 @@ def PREVENT_Sleep(chat_id, veh_id, remain_time):
   logger.info('PREVENT_Sleep: just running. ({}, {}, range: 0)'.format(chat_id, veh_id))
   threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
   for i in range(remain_time * 60 - 2):
-    time.sleep(59.9)
+    time.sleep(59.95)
     logger.info('PREVENT_Sleep: just running. ({}, {}, range: {})'.format(chat_id, veh_id, i+1))
     threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
+
+
+# PreConditioning
+# Running Every Min.
+def PreConditioning_Schedule():
+    logger.debug('PreConditioning: Schedule has been executed.')
+
+    _ThreadName = 'PreConditioningSchedule'
+    logger.debug('Thread ' + _ThreadName + ' started.')
+    threading.Thread(name = _ThreadName, target = PreConditioning_Target).start()
+
+def PreConditioning_Target():
+  for tuples in sql.inquirySchedules(
+  ['preconditioning_1', 'preconditioning_2', 'preconditioning_3', 'preconditioning_4', 'preconditioning_5']):
+    _schedules = []
+
+    for i in tuples[2:]:
+      if i:
+        if len(i) == 13: _schedules.append(i)
+
+    if _schedules:
+      _ThreadName, _ThreadExist = 'PRECON' + str(tuples[0]) + str(tuples[1]), False
+
+      for i in threading.enumerate():
+        if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+
+      if not _ThreadExist:
+        logger.info('Thread ' + _ThreadName + ' started.')
+        threading.Thread(name = _ThreadName, target = PreConditioning_exec, args = (tuples[0], tuples[1], _schedules)).start()
+
+def PreConditioning_exec(chat_id, veh_id, timestamps):
+  for i in timestamps:
+    if i[datetime.today().weekday()] == '1': # 요일 체크
+      if datetime.now().strftime('%H%M') == i[7:11]: # 시간 체크
+        for j in range(10):
+          if wakeVehicle(chat_id, veh_id):
+            if preConditioning(chat_id, veh_id, True):
+              _name = getVehName(chat_id, veh_id)
+
+              text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 프리컨디셔닝이 시작되고 있습니다:)\n'
+              bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+
+              logger.info('PreConditioning_exec: Preconditioning Started. ({}, {})'.format(chat_id, veh_id))
+              time.sleep(int(i[11:]) * 30)
+
+              if getVehCurrent(chat_id, veh_id) != 'online':
+                logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
+                return
+
+              for _ in range(10):
+                if preConditioning(chat_id, veh_id, False): break
+              
+              time.sleep(int(i[11:]) * 30)
+              if getVehCurrent(chat_id, veh_id) != 'online':
+                logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
+                return
+
+              if getDriveState(chat_id, veh_id)['shift_state'] in ['R', 'N', 'D']:
+                logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Driving)'.format(chat_id, veh_id))
+                return
+
+              for _ in range(10):
+                if HVACToggle(chat_id, veh_id) == 0: break
+                
+              text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n프리컨디셔닝 유지 시간이 초과하여 공조기가 꺼집니다.\n'
+              bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+              
+              logger.info('PreConditioning_exec: Preconditioning Completed. ({}, {})'.format(chat_id, veh_id))
+              return
+
+            logger.warning('PreConditioning_exec: Command Retrying. ({}, {}, range: {})'.format(chat_id, veh_id, j+1))
+
+        text = '\U000026A0 *프리컨디셔닝을 실패했습니다.*\n일시적인 통신 불량일 수 있습니다.\n'\
+             + '오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
+        bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+
+        logger.warning('PreConditioning_exec: Aborted. ({}, {}, Too Many Retries)'.format(chat_id, veh_id))
+        return
+
+  logger.debug('SENTRY_Switch: No schedule to execute. ({}, {})'.format(chat_id, veh_id))
+
+
+# Charge Stop
+# Running Every Min.
+def CHRG_Stop_Schedule():
+  logger.debug('CHRG_Stop: Schedule has been executed.')
+
+  _ThreadName = 'ChargeStopSchedule'
+  logger.debug('Thread ' + _ThreadName + ' started.')
+  threading.Thread(name = _ThreadName, target = CHRG_Stop_Target).start()
+
+def CHRG_Stop_Target():
+  for tuples in sql.inquirySchedules(['chrg_stop_1']):
+    if tuples[2]:
+      if datetime.now().strftime('%H%M') == tuples[2]: # 시간 체크
+        _ThreadName, _ThreadExist = 'CHRGSTOP' + str(tuples[0]) + str(tuples[1]), False
+
+        for i in threading.enumerate():
+          if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+
+        if not _ThreadExist:
+          logger.info('Thread ' + _ThreadName + ' started.')
+          threading.Thread(name = _ThreadName, target = chargeStop, args = (tuples[0], tuples[1])).start()
 
 
 # Sentry Mode Switch Automation
@@ -365,7 +481,7 @@ def SENTRY_Switch_Schedule():
     threading.Thread(name = _ThreadName, target = SENTRY_Switch_Target).start()
 
 def SENTRY_Switch_Target():
-  for tuples in sql.inquiryVehicles(
+  for tuples in sql.inquirySchedules(
   ['sentry_schedule_1', 'sentry_schedule_2', 'sentry_schedule_3', 'sentry_schedule_4', 'sentry_schedule_5']):
     _schedules = []
 
@@ -388,11 +504,18 @@ def SENTRY_Switch(chat_id, veh_id, timestamps):
     if i[datetime.today().weekday()] == '1': # 요일 체크
       if datetime.now().strftime('%H%M') == i[7:11]: # 시간 체크
         for j in range(10):
-          if SentrySchedule(chat_id, veh_id, i[11]):
+          if sentrySchedule(chat_id, veh_id, i[11]) == 0:
             _name = getVehName(chat_id, veh_id)
-            text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n감시모드 자동화가 잘 동작했어요:)\n'
+            text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 꺼졌습니다:)\n'
             bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
-            logger.info('SENTRY_Switch: Command successfully executed. ({}, {})'.format(chat_id, veh_id))
+            logger.info('SENTRY_Switch: Sentry Mode Turned Off. ({}, {})'.format(chat_id, veh_id))
+            return
+          
+          elif sentrySchedule(chat_id, veh_id, i[11]) == 1:
+            _name = getVehName(chat_id, veh_id)
+            text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 켜졌습니다:)\n'
+            bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+            logger.info('SENTRY_Switch: Sentry Mode Turned On. ({}, {})'.format(chat_id, veh_id))
             return
 
           logger.warning('SENTRY_Switch: Command Retrying. ({}, {}, range: {})'.format(chat_id, veh_id, j+1))
@@ -418,7 +541,9 @@ def __schedules():
   schedule.every(2).minutes.at(':40').do(COMMON_GetVehiclesState_Schedule)
 
   schedule.every().minutes.at(':00').do(PREVENT_Sleep_Schedule)
-  schedule.every().minutes.at(':00').do(SENTRY_Switch_Schedule)
+  schedule.every().minutes.at(':05').do(PreConditioning_Schedule)
+  schedule.every().minutes.at(':10').do(CHRG_Stop_Schedule)
+  schedule.every().minutes.at(':15').do(SENTRY_Switch_Schedule)
 
   schedule.every().monday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
   schedule.every().tuesday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
