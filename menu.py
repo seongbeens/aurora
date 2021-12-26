@@ -194,7 +194,7 @@ def STAT_Execution(update, context, veh_id, editable_msg):
     if vehData['climate_state']['climate_keeper_mode'] != 'off':
       message += '  \*  실내 온도 유지 모드도 켜져 있어요.\n'
   message += '{}\n'.format(sentry_mode[vehData['vehicle_state']['sentry_mode']])
-  message += '\U0001F4A1 누적 주행거리는 {}km에요.\n'.format(round(vehData['vehicle_state']['odometer']*1.609344))
+  message += '\U0001F4A1 누적 주행거리는 {0:,}km에요.\n'.format(round(vehData['vehicle_state']['odometer']*1.609344))
   message += '\U0001F50E SW 버전은 {}입니다.\n'.format(vehData['vehicle_state']['car_version'].split()[0])
     
   '''
@@ -237,7 +237,15 @@ def STAT_Execution(update, context, veh_id, editable_msg):
     update.message.reply_text(message, parse_mode = 'Markdown')
 
     # 소프트웨어 관련(vehicle_state/software_update)
-  if vehData['vehicle_state']['software_update']['status'] == 'downloading':
+  if vehData['vehicle_state']['software_update']['status'] == 'downloading_wifi_wait':
+    message = '\U0001F199 *새로운 소프트웨어 다운로드가 가능합니다!*\n'\
+            + str(vehData['vehicle_state']['software_update']['version'])\
+            + ' 버전 소프트웨어를 다운로드할 수 있어요:)\n'\
+            + '와이파이를 연결하고 새로운 소프트웨어를 다운로드 받아보세요\U0001F929\n'\
+            + '*\U000026A0 주행 중에는 절대 업데이트하지 마십시오.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+  elif vehData['vehicle_state']['software_update']['status'] == 'downloading':
     message = '\U0001F199 *소프트웨어 업데이트 다운로드 중! ('\
             + str(vehData['vehicle_state']['software_update']['download_perc'])\
             + '%)*\n'\
@@ -2558,12 +2566,6 @@ def SETT_DefaultVehicle(update, context):
   update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
 
   return SETTING_DEFAULT_VEH
-
-# 문, 창문, 트렁크 열림 알림
-# 프리컨디셔닝 예약 스케줄링
-# 새로운 소프트웨어 업데이트 알림(그룹방, 누군가 업뎃한다면 알림 발송)
-# 절전 방지 - 시작시간 설정 X - 주기적으로 일정 시간 온라인 유지
-# 충전 중 감시모드 자동 활성화 - 충전 종료 후 감시모드 종료
 
 # Enable Classes
 Sentry_ = Sentry()
