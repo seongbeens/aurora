@@ -424,7 +424,7 @@ def PreConditioning_Target():
 
     else: logger.debug('PreConditioning_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
 
-def PreConditioning_exec(chat_id, veh_id, schedule):
+def PreConditioning_exec(chat_id, veh_id, ts):
   for j in range(10):
     if wakeVehicle(chat_id, veh_id):
       if preConditioning(chat_id, veh_id, True):
@@ -434,7 +434,7 @@ def PreConditioning_exec(chat_id, veh_id, schedule):
         bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
 
         logger.info('PreConditioning_exec: Preconditioning Started. ({}, {})'.format(chat_id, veh_id))
-        time.sleep(int(schedule[11:]) * 30 - 2)
+        time.sleep(int(ts[11:]) * 30 - 2)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
@@ -443,7 +443,7 @@ def PreConditioning_exec(chat_id, veh_id, schedule):
         for _ in range(10):
           if preConditioning(chat_id, veh_id, False): break
         
-        time.sleep(int(schedule[11:]) * 30 - 2)
+        time.sleep(int(ts[11:]) * 30 - 2)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
@@ -535,9 +535,9 @@ def SENTRY_Switch_Target():
 
     else: logger.debug('SENTRY_Switch_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
 
-def SENTRY_Switch(chat_id, veh_id, schedule):
+def SENTRY_Switch(chat_id, veh_id, ts):
   for i in range(10):
-    if sentrySchedule(chat_id, veh_id, schedule[11]) == 0:
+    if sentrySchedule(chat_id, veh_id, ts[11]) == 0:
       _name = getVehName(chat_id, veh_id)
 
       text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 꺼졌습니다:)\n'
@@ -548,7 +548,7 @@ def SENTRY_Switch(chat_id, veh_id, schedule):
       time.sleep(30)
       return
     
-    elif sentrySchedule(chat_id, veh_id, schedule[11]) == 1:
+    elif sentrySchedule(chat_id, veh_id, ts[11]) == 1:
       _name = getVehName(chat_id, veh_id)
 
       text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 켜졌습니다:)\n'
