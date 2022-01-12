@@ -583,11 +583,11 @@ def sentrySchedule(chat_id, veh_id, switch):
 		for _ in range(10):
 			if __wakeUp(veh_id, token): break
 		
-		if switch == '1':
+		if switch == 1:
 			for _ in range(10):
 				if __sentry(veh_id, token, True): return 1
 			
-		if switch == '0':
+		if switch == 0:
 			for _ in range(10):
 				if __sentry(veh_id, token, False): return 0
 		
