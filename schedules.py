@@ -357,7 +357,6 @@ def PREVENT_Sleep_Target():
             startTime = nowTime.replace(hour = int(i[7:9]), minute = int(i[9:11]))
             endTime = startTime + dt.timedelta(minutes = int(i[11:]) * 60 - 1)
             if startTime <= nowTime <= endTime:
-            # if now.strftime('%H%M') == i[7:11]: # 시간 체크
               _ThreadName, _ThreadExist = 'PSWAKE' + str(tuples[0]) + str(tuples[1]), False
 
               for j in threading.enumerate():
@@ -375,16 +374,16 @@ def PREVENT_Sleep(chat_id, veh_id, endTime):
   _name = getVehName(chat_id, veh_id)
   threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
-  # text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 시작되고 있습니다:)\n'
-  # bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+  text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 시작되고 있습니다:)\n'
+  bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
   
   while endTime >= dt.datetime.now() + dt.timedelta(minutes = 3):
     time.sleep(180)
     logger.info('PREVENT_Sleep: Running. ({}, {}, endTime: {})'.format(chat_id, veh_id, endTime.strftime('%H%M')))
     threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
-  # text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 완료되었습니다:)\n'
-  # bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+  text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 완료되었습니다:)\n'
+  bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
 
 
 # PreConditioning
@@ -412,20 +411,19 @@ def PreConditioning_Target():
           startTime = nowTime.replace(hour = int(i[7:9]), minute = int(i[9:11]))
           endTime = startTime + dt.timedelta(minutes = int(i[11:]) - 1)
           if startTime <= nowTime <= endTime:
-          # if dt.datetime.now().strftime('%H%M') == i[7:11]: # 시간 체크
             _ThreadName, _ThreadExist = 'PRECON' + str(tuples[0]) + str(tuples[1]), False
 
-            for i in threading.enumerate():
-              if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+            for j in threading.enumerate():
+              if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
             if not _ThreadExist:
               logger.info('Thread ' + _ThreadName + ' started.')
-              threading.Thread(name = _ThreadName, target = PreConditioning_exec, args = (tuples[0], tuples[1], i)).start()
+              threading.Thread(name = _ThreadName, target = PreConditioning_exec, args = (tuples[0], tuples[1], int(i[11:]))).start()
 
     else: logger.debug('PreConditioning_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
 
-def PreConditioning_exec(chat_id, veh_id, ts):
-  for j in range(10):
+def PreConditioning_exec(chat_id, veh_id, minutes):
+  for i in range(10):
     if wakeVehicle(chat_id, veh_id):
       if preConditioning(chat_id, veh_id, True):
         _name = getVehName(chat_id, veh_id)
@@ -434,7 +432,7 @@ def PreConditioning_exec(chat_id, veh_id, ts):
         bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
 
         logger.info('PreConditioning_exec: Preconditioning Started. ({}, {})'.format(chat_id, veh_id))
-        time.sleep(int(ts[11:]) * 30 - 2)
+        time.sleep(minutes * 30 - 2)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
@@ -443,7 +441,7 @@ def PreConditioning_exec(chat_id, veh_id, ts):
         for _ in range(10):
           if preConditioning(chat_id, veh_id, False): break
         
-        time.sleep(int(ts[11:]) * 30 - 2)
+        time.sleep(minutes * 30 - 2)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
@@ -462,7 +460,7 @@ def PreConditioning_exec(chat_id, veh_id, ts):
         logger.info('PreConditioning_exec: Preconditioning Completed. ({}, {})'.format(chat_id, veh_id))
         return
 
-      logger.warning('PreConditioning_exec: Command Retrying. ({}, {}, range: {})'.format(chat_id, veh_id, j+1))
+      logger.warning('PreConditioning_exec: Command Retrying. ({}, {}, range: {})'.format(chat_id, veh_id, i+1))
 
   text = '\U000026A0 *프리컨디셔닝을 실패했습니다.*\n일시적인 통신 불량일 수 있습니다.\n'\
         + '오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
@@ -526,18 +524,18 @@ def SENTRY_Switch_Target():
           if startTime <= nowTime <= endTime:
             _ThreadName, _ThreadExist = 'SENTRY' + str(tuples[0]) + str(tuples[1]), False
 
-            for i in threading.enumerate():
-              if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
+            for j in threading.enumerate():
+              if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
             if not _ThreadExist:
               logger.info('Thread ' + _ThreadName + ' started.')
-              threading.Thread(name = _ThreadName, target = SENTRY_Switch, args = (tuples[0], tuples[1], i)).start()
+              threading.Thread(name = _ThreadName, target = SENTRY_Switch, args = (tuples[0], tuples[1], int(i[11]))).start()
 
     else: logger.debug('SENTRY_Switch_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
 
-def SENTRY_Switch(chat_id, veh_id, ts):
+def SENTRY_Switch(chat_id, veh_id, switch):
   for i in range(10):
-    if sentrySchedule(chat_id, veh_id, ts[11]) == 0:
+    if sentrySchedule(chat_id, veh_id, switch) == 0:
       _name = getVehName(chat_id, veh_id)
 
       text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 꺼졌습니다:)\n'
@@ -548,7 +546,7 @@ def SENTRY_Switch(chat_id, veh_id, ts):
       time.sleep(30)
       return
     
-    elif sentrySchedule(chat_id, veh_id, ts[11]) == 1:
+    elif sentrySchedule(chat_id, veh_id, switch) == 1:
       _name = getVehName(chat_id, veh_id)
 
       text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정하신 자동화 스케줄로 감시모드가 켜졌습니다:)\n'
