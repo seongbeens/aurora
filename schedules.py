@@ -364,26 +364,28 @@ def PREVENT_Sleep_Target():
 
               if not _ThreadExist:
                 logger.info('Thread ' + _ThreadName + ' started.')
-                threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], endTime)).start()
+                threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], startTime, endTime)).start()
                 time.sleep(0.1)
                 break
 
-def PREVENT_Sleep(chat_id, veh_id, endTime):
+def PREVENT_Sleep(chat_id, veh_id, startTime, endTime):
   logger.info('PREVENT_Sleep: Just running. ({}, {})'.format(chat_id, veh_id))
 
   _name = getVehName(chat_id, veh_id)
   threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
-  text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 시작되고 있습니다:)\n'
-  bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+  if startTime >= dt.datetime.now() - dt.timedelta(seconds = 30):
+    text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 시작되고 있습니다:)\n'
+    bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
   
   while endTime >= dt.datetime.now() + dt.timedelta(minutes = 3):
     time.sleep(180)
     logger.info('PREVENT_Sleep: Running. ({}, {}, endTime: {})'.format(chat_id, veh_id, endTime.strftime('%H%M')))
     threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
-  text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 완료되었습니다:)\n'
-  bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+  if endTime >= dt.datetime.now() - dt.timedelta(seconds = 30):
+    text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n설정한 절전 방지 스케줄이 완료되었습니다:)\n'
+    bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
 
 
 # PreConditioning
