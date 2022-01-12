@@ -82,11 +82,18 @@ def mainMenu(update, context, rtn = None):
 
   if vehicle_state == 401:
     message = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하고 있어요\U0001F609\n잠시만 기다려주세요.'
-    update.message.reply_text(message, parse_mode = 'Markdown')
+    editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+
     res = Token(update.message.chat_id).renewal()
-    if res == 0: return mainMenu(update, context, rtn = 1)
-    elif res == 1: return refreshToken(update, context, rtn = 1)
-    else: update.message.reply_text(str(res), parse_mode = 'Markdown')
+    if res == 0:
+      context.bot.deleteMessage(message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+      return mainMenu(update, context, rtn = 1)
+
+    elif res == 1:
+      return refreshToken(update, context, rtn = editable_msg)
+      
+    else:
+      update.message.reply_text(str(res), parse_mode = 'Markdown')
 
   else:
     message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*\n\n'.format(vehicle_name, state[vehicle_state])
@@ -110,7 +117,8 @@ def refreshToken(update, context, rtn = None):
 
   # Message
   message = '\U000026A0 *Tesla 계정의 비밀번호를 변경해야 합니다.*\nTesla의 인증 정책이 변경되어 리프레시 토큰 업데이트가 필요합니다.'
-  update.message.reply_text(message, parse_mode = 'Markdown', reply_markup = ReplyKeyboardRemove())
+  if rtn: rtn.edit_text(message, parse_mode = 'Markdown')
+  else: update.message.reply_text(message, parse_mode = 'Markdown')
 
   message = '*토큰 업데이트 방법을 알려드릴게요!*\n'\
           + '\U00002714 우선, [테슬라 홈페이지](https://www.tesla.com/ko_kr/teslaaccount)에서 계정 비밀번호를 변경합니다.\n'\
