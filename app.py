@@ -80,19 +80,51 @@ def mainMenu(update, context, rtn = None):
   vehicle_name = sql.inquiryVehicle(update.message.chat_id, default_vehicle, ['vehicle_name'])[0]
   vehicle_state = getVehCurrent(update.message.chat_id, default_vehicle)
 
-  message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*\n\n'.format(vehicle_name, state[vehicle_state])
-  keyboard = [['\U0001F5F3 내 차 브리핑', '\U0001F697 커맨드 앤 컨트롤'],
-              ['\U0001F6A6 스케줄링', '\U000023F0 오로라 알리미'],
-              ['\U00002734 내 차 찾기', '\U0001F3DD 근처 충전소 찾기'],
-              ['\U00002699 계정 및 연동 설정']]
+  if vehicle_state == 401:
+    message = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하고 있어요\U0001F609\n잠시만 기다려주세요.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+    res = Token(update.message.chat_id).renewal()
+    if res == 0: return mainMenu(update, context, rtn = 1)
+    elif res == 1: return refreshToken(update, context, rtn = 1)
+    else: update.message.reply_text(str(res), parse_mode = 'Markdown')
 
-  reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-  update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
-  
-  message = '\U0001F38A *오로라 사용자들을 위한 소통방이 생겼어요!*\n@TeslaAurora 를 눌러 그룹에 들어와보세요:)'
-  update.message.reply_text(message, parse_mode = 'Markdown')
+  else:
+    message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*\n\n'.format(vehicle_name, state[vehicle_state])
+    keyboard = [['\U0001F5F3 내 차 브리핑', '\U0001F697 커맨드 앤 컨트롤'],
+                ['\U0001F6A6 스케줄링', '\U000023F0 오로라 알리미'],
+                ['\U00002734 내 차 찾기', '\U0001F3DD 근처 충전소 찾기'],
+                ['\U00002699 계정 및 연동 설정']]
+
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+    update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+    
+    message = '\U0001F38A *오로라 사용자들을 위한 소통방이 생겼어요!*\n@TeslaAurora 를 눌러 그룹에 들어와보세요:)'
+    update.message.reply_text(message, parse_mode = 'Markdown')
 
   return MAIN_MENU
+
+def refreshToken(update, context, rtn = None):
+  if not rtn:
+    # Logging Conversation
+    convLog(update, convLogger)
+
+  # Message
+  message = '\U000026A0 *Tesla 계정의 비밀번호를 변경해야 합니다.*\nTesla의 인증 정책이 변경되어 리프레시 토큰 업데이트가 필요합니다.'
+  update.message.reply_text(message, parse_mode = 'Markdown', reply_markup = ReplyKeyboardRemove())
+
+  message = '*토큰 업데이트 방법을 알려드릴게요!*\n'\
+          + '\U00002714 우선, [테슬라 홈페이지](https://www.tesla.com/ko_kr/teslaaccount)에서 계정 비밀번호를 변경합니다.\n'\
+          + '\U00002714 이후 설치두셨던 토큰 발급 앱을 실행합니다. '\
+          + '설치 바로가기: [iOS](https://apps.apple.com/kr/app/auth-app-for-tesla/id1552058613) 또는 '\
+          + '[Android](https://play.google.com/store/apps/details?id=net.leveugle.teslatokens)\n'\
+          + '\U00002714 앱에서 Tesla 계정으로 로그인하고, Refresh Token의 값을 복사하세요.\n'\
+          + '\U00002714 복사한 값을 정확히 아래에 붙혀 넣으면 됩니다.'
+  update.message.reply_text(message, parse_mode = 'Markdown', disable_web_page_preview = True)
+
+  message = '*Refresh Token을 입력해주세요.*'
+  update.message.reply_text(message, parse_mode = 'Markdown')
+
+  return JOIN_GET_TOKEN
 
 
 #################### DEF: ECHO & CANCEL ####################

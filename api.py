@@ -18,26 +18,34 @@ def __vehicles(token, type = 0):
 	url = 'https://owner-api.teslamotors.com/api/1/vehicles'
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	r = requests.get(url, headers = headers)
-	if type == 100: return json.loads(r.content)['count']
-	elif type == 200: return json.loads(r.content)['response']
-	else: return r.status_code
+	if r.status_code == 401: return r.status_code
+	elif r.status_code == 429: return r.status_code
+	elif r.status_code == 200:
+		if type == 100: return json.loads(r.content)['count']
+		elif type == 200: return json.loads(r.content)['response']
+		else: return r.status_code
 
 def __state(id, token, column):
 	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}'.format(id)
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	r = requests.get(url, headers = headers)
-	if r.status_code == 429: return r.status_code
-	return json.loads(r.content)['response'][column]
+	if r.status_code == 401: return r.status_code
+	elif r.status_code == 429: return r.status_code
+	elif r.status_code == 200:
+		return json.loads(r.content)['response'][column]
+	else: return r.status_code
 
 def __vehdata(id, token):
 	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/vehicle_data'.format(id)
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 10):
 		r = requests.get(url, headers = headers)
-		if r.status_code == 429: return r.status_code
-		d = json.loads(r.content)['response']
-		if d: return d
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']
+			if d: return d
+			time.sleep(3)
 	return False
 
 def __chrgsites(id, token):
@@ -45,10 +53,12 @@ def __chrgsites(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.get(url, headers = headers)
-		if r.status_code == 429: return r.status_code
-		d = json.loads(r.content)['response']
-		if d: return d
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']
+			if d: return d
+			time.sleep(3)
 	return False
 
 def __wakeUp(id, token):
@@ -56,9 +66,12 @@ def __wakeUp(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 8):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['state']
-		if d == 'online': return True
-		time.sleep(15)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['state']
+			if d == 'online': return True
+			time.sleep(15)
 	return False
 
 def __unlock(id, token):
@@ -66,9 +79,12 @@ def __unlock(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __lock(id, token):
@@ -76,9 +92,12 @@ def __lock(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __window(id, token, command, lat = 0, lon = 0):
@@ -86,9 +105,12 @@ def __window(id, token, command, lat = 0, lon = 0):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers, data = {'command': command, 'lat': lat, 'lon': lon})
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __sentry(id, token, bools):
@@ -96,9 +118,12 @@ def __sentry(id, token, bools):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers, data = {'on': bools})
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __flashlights(id, token):
@@ -106,9 +131,12 @@ def __flashlights(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __hvac(id, token, togg):
@@ -116,9 +144,12 @@ def __hvac(id, token, togg):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __temps(id, token, value):
@@ -126,10 +157,13 @@ def __temps(id, token, value):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers, data = {'driver_temp': value, 'passenger_temp': value})
-		d = json.loads(r.content)['response']['result']
-		if d is True:
-			return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True:
+				return True
+			time.sleep(3)
 	return False
 
 def __precondition(id, token, bools):
@@ -137,9 +171,13 @@ def __precondition(id, token, bools):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers, data = {'on': bools})
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True:
+				return True
+			time.sleep(3)
 	return False
 
 def __charge_stop(id, token):
@@ -147,11 +185,13 @@ def __charge_stop(id, token):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		if not r.status_code == 200: return False # SLEEP(408)
-		d = json.loads(r.content)['response']
-		if d['result'] is True: return True
-		elif d['reason'] == 'not_charging': return False
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']
+			if d['result'] is True: return True
+			elif d['reason'] == 'not_charging': return False
+			time.sleep(3)
 	return False
 
 def __port(id, token, togg):
@@ -159,9 +199,12 @@ def __port(id, token, togg):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 5):
 		r = requests.post(url, headers = headers)
-		d = json.loads(r.content)['response']['result']
-		if d is True: return True
-		time.sleep(3)
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']['result']
+			if d is True: return True
+			time.sleep(3)
 	return False
 
 def __data_request(id, token, params):
@@ -169,8 +212,11 @@ def __data_request(id, token, params):
 	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
 	for _ in range(0, 10):
 		r = requests.get(url, headers = headers)
-		d = json.loads(r.content)['response']
-		if d: return d
+		if r.status_code == 401: return r.status_code
+		elif r.status_code == 429: return r.status_code
+		elif r.status_code == 200:
+			d = json.loads(r.content)['response']
+			if d: return d
 	return False
 
 ############################################################################################################
