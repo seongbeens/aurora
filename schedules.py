@@ -341,7 +341,7 @@ def REMIND_ChrgTime_Alert(chat_id, veh_id, veh_name):
 # Sleep Preventer
 # Running every min.
 def PREVENT_Sleep_Schedule():
-  logger.info('PREVENT_Sleep: Schedule has been executed.')
+  logger.debug('PREVENT_Sleep: Schedule has been executed.')
 
   _ThreadName = 'PreventSleepSchedule'
   logger.debug('Thread ' + _ThreadName + ' started.')
@@ -381,7 +381,7 @@ def PREVENT_Sleep(chat_id, veh_id, startTime, endTime):
   
   while endTime >= dt.datetime.now() + dt.timedelta(minutes = 3):
     time.sleep(180)
-    logger.info('PREVENT_Sleep: Running. ({}, {}, endTime: {})'.format(chat_id, veh_id, endTime.strftime('%H%M')))
+    logger.debug('PREVENT_Sleep: Running. ({}, {}, endTime: {})'.format(chat_id, veh_id, endTime.strftime('%H%M')))
     threading.Thread(target = wakeVehicle, args = (chat_id, veh_id)).start()
 
   if dt.datetime.now() - dt.timedelta(seconds = 30) <= endTime <= dt.datetime.now() + dt.timedelta(seconds = 30):
@@ -431,6 +431,7 @@ def PreConditioning_exec(chat_id, veh_id, startTime, switchTime, endTime):
   for i in range(10):
     if wakeVehicle(chat_id, veh_id):
       if preConditioning(chat_id, veh_id, True):
+        logger.info('PreConditioning_exec: Preconditioning Started. ({}, {})'.format(chat_id, veh_id))
         _name = getVehName(chat_id, veh_id)
 
         if dt.datetime.now() - dt.timedelta(seconds = 30) <= startTime <= dt.datetime.now() + dt.timedelta(seconds = 30):
@@ -438,21 +439,22 @@ def PreConditioning_exec(chat_id, veh_id, startTime, switchTime, endTime):
           bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
           logger.info('PreConditioning_exec: Start Message Sent. ({}, {})'.format(startTime.strftime('%H%M'), endTime.strftime('%H%M')))
 
-        logger.info('PreConditioning_exec: Preconditioning Started. ({}, {})'.format(chat_id, veh_id))
         while True:
           if dt.datetime.now() <= switchTime <= dt.datetime.now() + dt.timedelta(seconds = 30): break
-          time.sleep(30)
+          time.sleep(20)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
           return
 
         for _ in range(10):
-          if preConditioning(chat_id, veh_id, False): break
+          if preConditioning(chat_id, veh_id, False):
+            logger.info('PreConditioning_exec: Preconditioning Switched. ({}, {})'.format(chat_id, veh_id))
+            break
         
         while True:
           if dt.datetime.now() <= endTime <= dt.datetime.now() + dt.timedelta(seconds = 30): break
-          time.sleep(30)
+          time.sleep(20)
 
         if getVehCurrent(chat_id, veh_id) != 'online':
           logger.info('PreConditioning_exec: Preconditioning Aborted. ({}, {}, Not Online)'.format(chat_id, veh_id))
@@ -466,7 +468,7 @@ def PreConditioning_exec(chat_id, veh_id, startTime, switchTime, endTime):
           if HVACToggle(chat_id, veh_id) == 0: break
         
         if dt.datetime.now() - dt.timedelta(seconds = 30) <= endTime <= dt.datetime.now() + dt.timedelta(seconds = 30):
-          text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n프리컨디셔닝 유지 시간이 초과하여 공조기가 꺼집니다.\n'
+          text = '\U0001F389 *' + str(_name) + '의 알림이에요!*\n프리컨디셔닝 설정 시간이 초과하여 공조기가 꺼집니다.\n'
           bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
           logger.info('PreConditioning_exec: End Message Sent. ({}, {})'.format(startTime.strftime('%H%M'), endTime.strftime('%H%M')))
         
