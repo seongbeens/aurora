@@ -71,7 +71,7 @@ def COMMON_GetVehiclesState_Schedule():
   logger.debug('VEHSTAT: Schedule has been executed.')
 
   _ThreadName = 'GetVehiclesStateSchedule'
-  logger.info('Thread ' + _ThreadName + ' started.')
+  logger.debug('Thread ' + _ThreadName + ' started.')
   threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesState_Target).start()
 
 def COMMON_GetVehiclesState_Target():
