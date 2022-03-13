@@ -95,6 +95,12 @@ def mainMenu(update, context, rtn = None):
     else:
       update.message.reply_text(str(res), parse_mode = 'Markdown')
 
+  elif vehicle_state == 404:
+    message = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하고 있어요\U0001F609\n잠시만 기다려주세요.'
+    editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+    
+    return refreshToken(update, context, rtn = editable_msg)
+
   else:
     message = '이용하실 메뉴를 선택해주세요\U0001F636\n*{} 차량은 {}!*\n\n'.format(vehicle_name, state[vehicle_state])
     keyboard = [['\U0001F5F3 내 차 브리핑', '\U0001F697 커맨드 앤 컨트롤'],
@@ -116,20 +122,19 @@ def refreshToken(update, context, rtn = None):
     convLog(update, convLogger)
 
   # Message
-  message = '\U000026A0 *Tesla 계정의 비밀번호를 변경해야 합니다.*\nTesla의 인증 정책이 변경되어 리프레시 토큰 업데이트가 필요합니다.'
+  message = '\U000026A0 *Tesla 계정 인증이 만료되었습니다.*\nTesla Refresh 토큰의 업데이트가 필요합니다.'
   if rtn: rtn.edit_text(message, parse_mode = 'Markdown')
   else: update.message.reply_text(message, parse_mode = 'Markdown')
 
   message = '*토큰 업데이트 방법을 알려드릴게요!*\n'\
-          + '\U00002714 우선, [테슬라 홈페이지](https://www.tesla.com/ko_kr/teslaaccount)에서 계정 비밀번호를 변경합니다.\n'\
-          + '\U00002714 이후 설치두셨던 토큰 발급 앱을 실행합니다. '\
+          + '\U00002714 토큰 발급 앱을 실행합니다. '\
           + '설치 바로가기: [iOS](https://apps.apple.com/kr/app/auth-app-for-tesla/id1552058613) 또는 '\
           + '[Android](https://play.google.com/store/apps/details?id=net.leveugle.teslatokens)\n'\
-          + '\U00002714 앱에서 Tesla 계정으로 로그인하고, Refresh Token의 값을 복사하세요.\n'\
+          + '\U00002714 앱에서 Tesla 계정으로 로그인하고, Refresh 토큰의 값을 복사하세요.\n'\
           + '\U00002714 복사한 값을 정확히 아래에 붙혀 넣으면 됩니다.'
   update.message.reply_text(message, parse_mode = 'Markdown', disable_web_page_preview = True)
 
-  message = '*Refresh Token을 입력해주세요.*'
+  message = '*Refresh Token을 입력해주세요.*\n\U000026A0 위 링크의 앱 이외의 경로로 발급한 토큰은 이용에 제한이 있을 수 있습니다.'
   update.message.reply_text(message, parse_mode = 'Markdown')
 
   return JOIN_GET_TOKEN
