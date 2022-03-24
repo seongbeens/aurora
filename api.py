@@ -631,18 +631,19 @@ class Token:
     # Get new owner api access token from sso access token
     sso_access_token = json.loads(response.text)['access_token']
 
-    owner_api_url = 'https://owner-api.teslamotors.com/oauth/token'
-    owner_api_payload = { 'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                          'client_id': '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384' }
+    # owner_api_url = 'https://owner-api.teslamotors.com/oauth/token'
+    # owner_api_payload = { 'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    #                       'client_id': '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384' }
 
-    owner_api_headers = { 'Authorization': 'Bearer ' + sso_access_token }
-    owner_api_response = requests.post(owner_api_url, json = owner_api_payload, headers = owner_api_headers)
-    owner_api_access_token = json.loads(owner_api_response.text)['access_token']
+    # owner_api_headers = { 'Authorization': 'Bearer ' + sso_access_token }
+    # owner_api_response = requests.post(owner_api_url, json = owner_api_payload, headers = owner_api_headers)
+    # owner_api_access_token = json.loads(owner_api_response.text)['access_token']
 
     self.refresh_token = sso_refresh_token
-    self.access_token = owner_api_access_token
+    self.access_token = sso_access_token
+    # self.access_token = owner_api_access_token
 
-    return owner_api_access_token
+    return sso_access_token
 
 
   def renewal(self):
@@ -664,21 +665,25 @@ class Token:
     # Get new owner api access token from sso access token
     sso_access_token = json.loads(response.text)['access_token']
 
-    owner_api_url = 'https://owner-api.teslamotors.com/oauth/token'
-    owner_api_payload = { 'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                          'client_id': '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384' }
+    # owner_api_url = 'https://owner-api.teslamotors.com/oauth/token'
+    # owner_api_payload = { 'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    #                       'client_id': '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384' }
 
-    owner_api_headers = { 'Authorization': 'Bearer ' + sso_access_token }
-    owner_api_response = requests.post(owner_api_url, json = owner_api_payload, headers = owner_api_headers)
-    owner_api_access_token = json.loads(owner_api_response.text)['access_token']
+    # owner_api_headers = { 'Authorization': 'Bearer ' + sso_access_token }
+    # owner_api_response = requests.post(owner_api_url, json = owner_api_payload, headers = owner_api_headers)
+    # owner_api_access_token = json.loads(owner_api_response.text)['access_token']
 
     # Verify Exist
-    if owner_api_access_token:
-      self.access_token = owner_api_access_token
+    if sso_access_token:
+      self.access_token = sso_access_token
     else: return 2
 
+    # if owner_api_access_token:
+    #   self.access_token = owner_api_access_token
+    # else: return 2
+
     # Count Vehicles
-    try: vehicle_cnts = getVehCounts(self.chat_id, owner_api_access_token)
+    try: vehicle_cnts = getVehCounts(self.chat_id, sso_access_token)
     except: return 3
 
     # Number of Vehicles (0 < n < 2)
@@ -690,11 +695,11 @@ class Token:
     else: return 6
 
     # Append Tokens into DB
-    if sql.modifyAccount(self.chat_id, ['token_refresh', 'token_access'], [sso_refresh_token, owner_api_access_token]): pass
+    if sql.modifyAccount(self.chat_id, ['token_refresh', 'token_access'], [sso_refresh_token, sso_access_token]): pass
     else: return 7
 
     # Create Vehicle Data into DB
-    if generateVehicles(self.chat_id, owner_api_access_token): pass
+    if generateVehicles(self.chat_id, sso_access_token): pass
     else: return 8
     
     return 0
