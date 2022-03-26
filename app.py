@@ -189,6 +189,15 @@ def main():
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^토큰 등록 계속하기$'), getToken_resume)],
+      EXPIRED_GET_TOKEN:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.text, verifyToken_expired, run_async = True)],
+      EXPIRED_DEFAULT_VEH:
+        [CommandHandler('cancel', cancel),
+        MessageHandler(Filters.regex('^/종료$'), cancel),
+        MessageHandler(Filters.regex('^\U0001F519'), start, run_async = True),
+        MessageHandler(Filters.text, verifyVehicle_expired, run_async = True)],
       MAIN_MENU:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
@@ -224,12 +233,12 @@ def main():
       JOIN_GET_TOKEN:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
-        MessageHandler(Filters.text, verifyToken, run_async = True)],
+        MessageHandler(Filters.text, verifyToken_join, run_async = True)],
       JOIN_DEFAULT_VEH:
         [CommandHandler('cancel', cancel),
         MessageHandler(Filters.regex('^/종료$'), cancel),
         MessageHandler(Filters.regex('^\U0001F519'), start, run_async = True),
-        MessageHandler(Filters.text, verifyVehicle, run_async = True)],
+        MessageHandler(Filters.text, verifyVehicle_join, run_async = True)],
 
       # MENU.PY
       # STATUS

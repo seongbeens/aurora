@@ -193,7 +193,7 @@ def getToken_resume(update, context):
 
   return JOIN_GET_TOKEN
 
-def verifyToken(update, context):
+def verifyToken_join(update, context):
   # Logging Conversation
   convLog(update, convLogger)
 
@@ -344,7 +344,157 @@ def verifyToken(update, context):
     message = '*Refresh Token을 입력해주세요.*'
     update.message.reply_text(message, parse_mode = 'Markdown')
 
-def verifyVehicle(update, context):
+def verifyToken_expired(update, context):
+  # Logging Conversation
+  convLog(update, convLogger)
+
+  # Delete the Token Information Message
+  #update.message.delete()
+
+  # Message
+  message = '\U0001F4AB *토큰을 검증하고 있습니다...*\n'
+  #message += '입력하신 메시지는 보안을 위해 저희가 삭제했습니다:)'
+  editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+
+  # Verify Refresh Token & Get Access Token
+  access_t = Token(update.message.chat_id).generate(update.message.text)
+
+  # Succeeded Verify Token
+  if access_t:
+    if Token(update.message.chat_id).verify(access_t):
+      # Message
+      message = '\U0001F44F *토큰 검증을 성공했습니다!*\n'
+      editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+      message = '\U0001F4AB *등록된 차량 목록을 가져오는 중입니다...*'
+      editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+            
+      '''
+      if vehicle_cnts > 2:
+        # Message
+        message = '\U000026A0 *이런, 차량을 3대 이상 보유하고 계시군요.*\n'\
+                + '3대 이상의 차량이 있는 Tesla 계정으로는 가입이 제한돼요:(\n'\
+                + '서버 안정화를 위한 조치로, 더 많은 이용자가 쾌적하게 사용할 수 있게 하기 위함임을 양해해주셨으면 좋겠습니다\U0001F622\n'\
+                + '새로운 Tesla 계정을 만들어 \'다른 운전자 추가\' 기능을 이용하신다면 서비스를 이용하실 수 있습니다.\n'\
+                + '다음 기회에 다시 찾아뵙기를 희망합니다\U0001F3C3\n'\
+                + '[테슬라 계정 생성 바로가기 링크](https://auth.tesla.com/oauth2/v1/register?redirect_uri=https%3A%2F%2Fwww.tesla.com%2Fteslaaccount%2Fowner-xp%2Fauth%2Fcallback&response_type=code&client_id=ownership&scope=offline_access+openid+ou_code+email&audience=https%3A%2F%2Fownership.tesla.com%2F&locale=ko-KR)'
+                        
+        editable_msg.edit_text(message, parse_mode = 'Markdown')
+                
+        return ConversationHandler.END
+      '''
+
+      vehicle_cnts = getVehCounts(update.message.chat_id, access_t)
+      if sql.modifyAccount(update.message.chat_id, ['vehicle_counts'], [vehicle_cnts]):
+        if generateVehicles(update.message.chat_id, access_t):
+          message = '\U0001F44F *차량 목록을 가져왔습니다!*\n'
+          editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+          # Write Privacy info.
+          # Succeeded Write Token
+          if sql.modifyAccount(update.message.chat_id, ['token_refresh', 'token_access'], [update.message.text, access_t]):
+            if vehicle_cnts > 1:
+              # Message
+              message = '\U0001F607 *차량을 두 대 이상 보유하고 계시군요!*\n'\
+                      + '보유한 차량 중에서 자주 사용하는 차량을 지정해야 합니다.\n'\
+                      + '서비스 사용 시 차량 선택에 대한 절차를 간소화하기 위해 모든 기능은 설정된 자주 사용하는 차량에 대해 동작합니다.\n'\
+                      + '자주 사용하는 차량은 한 대만 설정할 수 있으며, 계정 설정에서 언제든 변경할 수 있습니다:)\n'
+              editable_msg.edit_text(message, parse_mode = 'Markdown')
+              
+              message = '*자주 사용하는 차량을 선택해주세요.*'
+              keyboard = _keyboardMarkup_vehicles(update, context)
+              
+              reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+              update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+              return EXPIRED_DEFAULT_VEH
+            
+            elif vehicle_cnts == 0:
+              # Message
+              message = '\U0001F607 *아직 테슬라 차량이 없어요!*\n'\
+                      + '테슬라 계정에 차량이 한 대 이상 등록되어 있어야 테슬라 오로라를 이용할 수 있습니다.\n'\
+                      + '차량 출고 이전이라면 인도 수락 이후 다시 이용해주세요.'
+              editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+              return ConversationHandler.END
+
+            else:
+              message = '\U0001F4AB *데이터를 저장하고 있습니다...*'
+              editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+
+              for _ in getVehCurrent(update.message.chat_id): vID = _['id']
+              if sql.modifyAccount(update.message.chat_id, ['default_vehicle'], [vID]):
+                # Message
+                message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
+                editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+                message = 'Refresh 토큰 갱신이 완료되었습니다\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다! \U0001F929\U0001F929\n'
+                keyboard = [['\U0001F920']]
+
+                reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+                update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+                return GOTO_MENU
+
+              # Failed modifyAccount()
+              else:
+                # Message
+                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+                update.message.reply_text(message, parse_mode = 'Markdown')
+                            
+                return ConversationHandler.END
+
+          # Failed Write Token
+          else:
+            # Message
+            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+            update.message.reply_text(message, parse_mode = 'Markdown')
+                        
+            return ConversationHandler.END
+
+        # Failed createVehID
+        else:
+          # Message
+          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+          editable_msg.edit_text(message, parse_mode = 'Markdown')
+                    
+          return ConversationHandler.END
+
+      # Failed modifyAccount | countVeh
+      else:
+        # Message
+        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        editable_msg.edit_text(message, parse_mode = 'Markdown')
+                
+        return ConversationHandler.END
+        
+    # Failed Verify Token
+    else:
+      # Message
+      message = '\U000026A0 *Token이 정확하지 않거나 유효하지 않습니다.*\n'
+      editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+      message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
+              + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
+      update.message.reply_text(message, parse_mode = 'Markdown')
+                    
+      message = '*Refresh Token을 입력해주세요.*'
+      update.message.reply_text(message, parse_mode = 'Markdown')
+    
+  # Failed Verify Token
+  else:
+    # Message
+    message = '\U000026A0 *Token이 정확하지 않거나 유효하지 않습니다.*\n'
+    editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+    message = '보내드린 메시지의 링크에 있는 앱에서 토큰을 발급하길 권장드리며, Access Token이 아닌 Refresh Token을 입력하셔야 합니다\U0001F62C\n'\
+            + '지속적으로 오류가 발생한다면 @TeslaAuroraCS 로 문의해주세요.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+                
+    message = '*Refresh Token을 입력해주세요.*'
+    update.message.reply_text(message, parse_mode = 'Markdown')
+
+def verifyVehicle_join(update, context):
   # Message
   message = '\U0001F4AB *차량을 확인하고 있습니다...*'
   editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
@@ -391,6 +541,113 @@ def verifyVehicle(update, context):
         
         return ConversationHandler.END
 
+    else: # Not Matched Vehicle(ID <> DP_NAME)
+      # Message
+      #context.bot.deleteMessage(message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+      message = '\U000026A0 *차량을 찾을 수 없습니다.*\n임의의 텍스트를 입력할 수 없어요:(\n'\
+              + '아래 버튼에 표시되는 차량 이름이 올바르지 않다면 @TeslaAuroraCS 로 문의해주세요.'
+      editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+      message = '*차량을 선택해주세요.*'
+      keyboard = _keyboardMarkup_vehicles(update, context)
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+      return JOIN_DEFAULT_VEH
+      
+  else: # Token Expired
+    # Message
+    message = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하고 있어요\U0001F609\n잠시만 기다려주세요.'
+    editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+    # Renewal Access Token
+    if Token(update.message.chat_id).renewal() == 0:
+      context.bot.deleteMessage(
+        message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+      return verifyVehicle_join(update, context)
+    else:
+      message = '\U000026A0 *토큰 갱신에 실패했습니다.*\n다시 한 번 시도해볼게요:(\n잠시만 기다려주세요.'
+      editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+      # Renewal Access Token(1-More-Time)
+      _a = Token(update.message.chat_id).renewal()
+      if _a == 0:
+        context.bot.deleteMessage(
+          message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+        return verifyVehicle_join(update, context)
+
+      else:
+        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_1\n'
+        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_2\n'
+        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_3\n'
+        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_4\n'
+        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_5\n'
+        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_6\n'
+        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_7\n'
+        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
+        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
+
+      message += '@TeslaAuroraCS 로 문의해주세요.'
+      keyboard = [['\U0001F519 돌아가기']]
+
+      context.bot.deleteMessage(
+        message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+
+      # Logging Conversation
+      convLog(update, convLogger)
+
+      reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+      update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+            
+      return GOTO_MENU
+
+def verifyVehicle_expired(update, context):
+  # Message
+  message = '\U0001F4AB *차량을 확인하고 있습니다...*'
+  editable_msg = update.message.reply_text(message, parse_mode = 'Markdown')
+    
+  # Verify Access Token
+  if Token(update.message.chat_id).verify():
+    # Vehicles Vars
+    vID, vName = [], []
+
+    # Logging Conversation
+    convLog(update, convLogger)
+
+    # Matching Vehicle(ID <> DP_NAME)
+    for i in getVehCurrent(update.message.chat_id):
+      vID.insert(0, i['id'])
+      vName.insert(0, i['display_name'])
+      # [0]에 insert하면서 기존 데이터는 [1]로 옮겨짐
+      
+    # Verify Reply
+    if update.message.text in vName:
+      message = '\U0001F4AB *데이터를 저장하고 있습니다...*'
+      editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+      _a = vID[vName.index(update.message.text)]
+      if sql.modifyAccount(update.message.chat_id, ['default_vehicle'], [_a]):
+        # Message
+        message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
+        editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+        message = 'Refresh 토큰 갱신이 완료되었습니다\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다! \U0001F929\U0001F929\n'
+        keyboard = [['\U0001F920']]
+
+        reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+        update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+        return GOTO_MENU
+
+      # Failed modifyAccount()
+      else:
+        # Message
+        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        editable_msg.edit_text(message, parse_mode = 'Markdown')
+        
+        return ConversationHandler.END
+
     else: # Not Matched Vehicle(ID - DP_NAME)
       # Message
       #context.bot.deleteMessage(message_id = editable_msg.message_id, chat_id = update.message.chat_id)
@@ -415,7 +672,7 @@ def verifyVehicle(update, context):
     if Token(update.message.chat_id).renewal() == 0:
       context.bot.deleteMessage(
         message_id = editable_msg.message_id, chat_id = update.message.chat_id)
-      return verifyVehicle(update, context)
+      return verifyVehicle_expired(update, context)
     else:
       message = '\U000026A0 *토큰 갱신에 실패했습니다.*\n다시 한 번 시도해볼게요:(\n잠시만 기다려주세요.'
       editable_msg.edit_text(message, parse_mode = 'Markdown')
@@ -425,7 +682,7 @@ def verifyVehicle(update, context):
       if _a == 0:
         context.bot.deleteMessage(
           message_id = editable_msg.message_id, chat_id = update.message.chat_id)
-        return verifyVehicle(update, context)
+        return verifyVehicle_expired(update, context)
 
       else:
         if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_1\n'
