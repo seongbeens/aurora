@@ -28,7 +28,7 @@ def start(update, context):
   
   # No Exist Telegram ID:
   if basics is None:
-    message = '*오로라에 처음 오셨군요*\U0001F44B\U0001F44B\n서비스 가입하기를 눌러 진행해주세요.'
+    message = '*오로라에 처음 오셨군요*\U0001F44B\U0001F44B\n서비스 가입하기를 눌러 진행해주세요.\n가입 절차 중 문제가 발생한 경우 @TeslaAuroraCS 로 문의해주세요.'
     keyboard = [['서비스 가입하기 \U0001F978']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -63,7 +63,7 @@ def start(update, context):
 
     # No Exist Name, Phone Number, E-Mail:
     else:
-      message = '*오로라에 처음 오셨군요*\U0001F44B\U0001F44B\n서비스 가입하기를 눌러 진행해주세요.'
+      message = '*오로라에 처음 오셨군요*\U0001F44B\U0001F44B\n서비스 가입하기를 눌러 진행해주세요.\n가입 절차 중 문제가 발생한 경우 @TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['서비스 가입하기 \U0001F978']]
 
       reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -111,7 +111,7 @@ def mainMenu(update, context, rtn = None):
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
     update.message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
     
-    message = '\U0001F38A *오로라 사용자들을 위한 소통방이 생겼어요!*\n@TeslaAurora 를 눌러 그룹에 들어와보세요:)'
+    message = '\U0001F38A *오로라 사용자 소통방에 참여하세요!*\n@TeslaAurora 를 눌러 그룹에 들어와보세요:)'
     update.message.reply_text(message, parse_mode = 'Markdown')
 
   return MAIN_MENU
@@ -126,7 +126,7 @@ def refreshToken(update, context, rtn = None):
   if rtn: rtn.edit_text(message, parse_mode = 'Markdown')
   else: update.message.reply_text(message, parse_mode = 'Markdown')
 
-  message = '*토큰 업데이트 방법을 알려드릴게요!*\n'\
+  message = '*토큰을 갱신하는 방법을 알려드릴게요!*\n'\
           + '\U00002714 토큰 발급 앱을 실행합니다. '\
           + '설치 바로가기: [iOS](https://apps.apple.com/kr/app/auth-app-for-tesla/id1552058613) 또는 '\
           + '[Android](https://play.google.com/store/apps/details?id=net.leveugle.teslatokens)\n'\
@@ -137,7 +137,7 @@ def refreshToken(update, context, rtn = None):
   message = '*Refresh Token을 입력해주세요.*\n\U000026A0 위 링크의 앱 이외의 경로로 발급한 토큰은 이용에 제한이 있을 수 있습니다.'
   update.message.reply_text(message, parse_mode = 'Markdown')
 
-  return JOIN_GET_TOKEN
+  return EXPIRED_GET_TOKEN
 
 
 #################### DEF: ECHO & CANCEL ####################

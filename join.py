@@ -277,7 +277,7 @@ def verifyToken_join(update, context):
                 message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
                 editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-                message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
+                message = '*테슬라 오로라의 가입이 완료되었습니다*\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
                         + '오로라에서는 유저들의 정보 공유를 위해 소통방을 운영하고 있습니다:) @TeslaAurora 를 눌러 소통방에 들어와보세요!'
                 keyboard = [['\U0001F920']]
 
@@ -386,7 +386,35 @@ def verifyToken_expired(update, context):
 
       vehicle_cnts = getVehCounts(update.message.chat_id, access_t)
       if sql.modifyAccount(update.message.chat_id, ['vehicle_counts'], [vehicle_cnts]):
-        if generateVehicles(update.message.chat_id, access_t):
+        newerVeh = generateVehicles(update.message.chat_id, access_t)
+        if newerVeh:
+          existVeh = []
+          try:
+            for i in sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_id']):
+              existVeh.append(i[0])
+          
+          except:
+            # Message
+            message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: JOIN\_398\n@TeslaAuroraCS 로 문의해주세요.'
+            editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+            return ConversationHandler.END
+          
+          for i in existVeh:
+            factor = 0
+            for j in newerVeh:
+              if i == j: factor = 1
+            if factor == 0:
+              try:
+                sql.deleteVehicle(update.message.chat_id, i)
+
+              except:
+                # Message
+                message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: JOIN\_413\n@TeslaAuroraCS 로 문의해주세요.'
+                editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+                return ConversationHandler.END
+            
           message = '\U0001F44F *차량 목록을 가져왔습니다!*\n'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
 
@@ -428,7 +456,7 @@ def verifyToken_expired(update, context):
                 message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
                 editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-                message = 'Refresh 토큰 갱신이 완료되었습니다\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다! \U0001F929\U0001F929\n'
+                message = '*토큰 갱신이 완료되었습니다*\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다\U0001F929\U0001F929\n'
                 keyboard = [['\U0001F920']]
 
                 reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -439,7 +467,7 @@ def verifyToken_expired(update, context):
               # Failed modifyAccount()
               else:
                 # Message
-                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+                message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: JOIN\_470\n@TeslaAuroraCS 로 문의해주세요.'
                 update.message.reply_text(message, parse_mode = 'Markdown')
                             
                 return ConversationHandler.END
@@ -447,15 +475,15 @@ def verifyToken_expired(update, context):
           # Failed Write Token
           else:
             # Message
-            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+            message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: JOIN\_478\n@TeslaAuroraCS 로 문의해주세요.'
             update.message.reply_text(message, parse_mode = 'Markdown')
                         
             return ConversationHandler.END
-
+        
         # Failed createVehID
         else:
           # Message
-          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: JOIN\_486\n@TeslaAuroraCS 로 문의해주세요.'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
                     
           return ConversationHandler.END
@@ -463,7 +491,7 @@ def verifyToken_expired(update, context):
       # Failed modifyAccount | countVeh
       else:
         # Message
-        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: JOIN\_494\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
                 
         return ConversationHandler.END
@@ -524,7 +552,7 @@ def verifyVehicle_join(update, context):
         message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-        message = '테슬라 오로라의 가입이 완료되었습니다\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
+        message = '*테슬라 오로라의 가입이 완료되었습니다*\U0001F973\n이제 오로라만의 다양한 기능을 누려보세요! \U0001F929\U0001F929\n'\
                 + '오로라에서는 유저들의 정보 공유를 위해 소통방을 운영하고 있습니다:) @TeslaAurora 를 눌러 소통방에 들어와보세요!'
         keyboard = [['\U0001F920']]
 
@@ -536,7 +564,7 @@ def verifyVehicle_join(update, context):
       # Failed modifyAccount()
       else:
         # Message
-        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: JOIN\_567\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
         
         return ConversationHandler.END
@@ -578,15 +606,15 @@ def verifyVehicle_join(update, context):
         return verifyVehicle_join(update, context)
 
       else:
-        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_1\n'
-        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_2\n'
-        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_3\n'
-        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_4\n'
-        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_5\n'
-        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_6\n'
-        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_7\n'
-        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
-        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
+        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_609\n'
+        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_610\n'
+        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_611\n'
+        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_612\n'
+        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_613\n'
+        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_614\n'
+        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_615\n'
+        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_616\n'
+        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_617\n'
 
       message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
@@ -632,7 +660,7 @@ def verifyVehicle_expired(update, context):
         message = '\U0001F44F *모든 데이터를 안전하게 저장했습니다!*\n'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
 
-        message = 'Refresh 토큰 갱신이 완료되었습니다\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다! \U0001F929\U0001F929\n'
+        message = '*토큰 갱신이 완료되었습니다*\U0001F973\n이제 다시 오로라를 정상적으로 이용할 수 있습니다\U0001F929\U0001F929\n'
         keyboard = [['\U0001F920']]
 
         reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -685,15 +713,15 @@ def verifyVehicle_expired(update, context):
         return verifyVehicle_expired(update, context)
 
       else:
-        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_1\n'
-        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_2\n'
-        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_3\n'
-        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_4\n'
-        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_5\n'
-        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_6\n'
-        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_7\n'
-        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
-        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
+        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_716\n'
+        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_717\n'
+        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_718\n'
+        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_719\n'
+        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_720\n'
+        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_721\n'
+        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_722\n'
+        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_723\n'
+        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_724\n'
 
       message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]

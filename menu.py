@@ -159,7 +159,16 @@ def STAT_Execution(update, context, veh_id, editable_msg):
   editable_msg.edit_text(message, parse_mode = 'Markdown')
     
   vehData = getVehData(update.message.chat_id, veh_id)
-    
+  
+  columns = ['sentry_switch_1', 'sentry_switch_2', 'sentry_switch_3', 'sentry_switch_4', 'sentry_switch_5']
+  scheSentrys = sql.inquirySchedule(update.message.chat_id, veh_id, columns)
+
+  columns = ['prevent_sleep_1', 'prevent_sleep_2']
+  schePrevents = sql.inquirySchedule(update.message.chat_id, veh_id, columns)
+
+  columns = ['preconditioning_1', 'preconditioning_2', 'preconditioning_3', 'preconditioning_4', 'preconditioning_5']
+  schePrecons = sql.inquirySchedule(update.message.chat_id, veh_id, columns)
+
   # Delete Loading Message
   context.bot.deleteMessage(
     message_id = editable_msg.message_id, chat_id = update.message.chat_id)
@@ -236,7 +245,7 @@ def STAT_Execution(update, context, veh_id, editable_msg):
             + '\U000023F0 경부하 충전 시간대를 기다리고 계신다면 오로라의 경부하 충전 시간 알리미를 이용해보세요:)\n'
     update.message.reply_text(message, parse_mode = 'Markdown')
 
-    # 소프트웨어 관련(vehicle_state/software_update)
+  # 소프트웨어 관련(vehicle_state/software_update)
   if vehData['vehicle_state']['software_update']['status'] == 'downloading_wifi_wait':
     message = '\U0001F199 *새로운 소프트웨어 다운로드가 가능합니다!*\n'\
             + str(vehData['vehicle_state']['software_update']['version'])\
@@ -280,7 +289,52 @@ def STAT_Execution(update, context, veh_id, editable_msg):
             + ' 버전으로 업데이트하고 있습니다:)\n'\
             + '업데이트 중에는 절대 주행하지 마세요\U0000203C\n'
     update.message.reply_text(message, parse_mode = 'Markdown')
+  
+  if scheSentrys:
+    validCnts = 0
+    message = '\U0001F422 *등록된 감시모드 스케줄이 있어요.*'
+
+    for i, j in enumerate(scheSentrys):
+      if j:
+        if len(j) == 12:
+          message += '\n*#' + str(i+1) + '* ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
+          if j[11] == '0': message += '에 감시모드 끔'
+          else: message += '에 감시모드 켬'
+          validCnts += 1
     
+    if validCnts > 0:
+      update.message.reply_text(message, parse_mode = 'Markdown')
+
+  if schePrevents:
+    validCnts = 0
+    message = '\U0001F995 *등록된 절전방지 스케줄이 있어요.*'
+
+    for i, j in enumerate(schePrevents):
+      if j:
+        if len(j) == 13:
+          message += '\n*#' + str(i+1) + '* ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
+          message += '부터 ' + str(int(j[11:])) + '시간'
+          validCnts += 1
+    
+    if validCnts > 0:
+      update.message.reply_text(message, parse_mode = 'Markdown')
+
+
+  if schePrecons:
+    validCnts = 0
+    message = '\U0001F996 *등록된 프리컨디셔닝 스케줄이 있어요.*'
+
+    for i, j in enumerate(schePrecons):
+      if j:
+        if len(j) == 13:
+          message += '\n*#' + str(i+1) + '* ' + DayOfWeek[j[:7]] + ' ' + j[7:9] + ':' + j[9:11]
+          message += '부터 ' + str(int(j[11:])) + '분'
+          validCnts += 1
+    
+    if validCnts > 0:
+      update.message.reply_text(message, parse_mode = 'Markdown')
+
+  
   return STATUS
 
 def STAT_Help(update, context):
@@ -2142,13 +2196,14 @@ def SETT_GetToken(update, context):
   convLog(update, convLogger)
 
   # Message
-  message = '본 서비스와 회원님의 차량이 연동되기 위해 Tesla 계정과 연결되는 토큰이 필요합니다.\n'\
+  message = '*Tesla 계정과 연결하는 토큰을 갱신합니다.*\n'\
+          + '토큰 갱신과 동시에 연동된 차량을 새로 불러올거에요! Tesla 계정에서 삭제된 차량은 오로라에서도 삭제되고, Tesla 계정에 추가된 차량은 오로라에서도 추가되어요.\n'\
           + '토큰은 종단 간 암호화되어 있으므로 개발자를 비롯한 중간의 *그 누구도 회원님의 계정 정보를 알 수 없습니다.*'
   update.message.reply_text(message, parse_mode = 'Markdown', reply_markup = ReplyKeyboardRemove())
 
-  message = '*토큰 발급 방법을 알려드릴게요!*\n'\
-          + '\U00002714 우선, 토큰을 발급받을 수 있는 앱을 설치해야 합니다. '\
-          + '바로가기: [iOS](https://apps.apple.com/kr/app/auth-app-for-tesla/id1552058613) 또는 '\
+  message = '*토큰을 갱신하는 방법을 알려드릴게요!*\n'\
+          + '\U00002714 토큰 발급 앱을 실행합니다. '\
+          + '설치 바로가기: [iOS](https://apps.apple.com/kr/app/auth-app-for-tesla/id1552058613) 또는 '\
           + '[Android](https://play.google.com/store/apps/details?id=net.leveugle.teslatokens)\n'\
           + '\U00002714 앱에서 Tesla 계정으로 로그인하고, Refresh Token의 값을 복사하세요.\n'\
           + '\U00002714 복사한 값을 정확히 아래에 붙혀 넣으면 됩니다.'
@@ -2201,7 +2256,35 @@ def SETT_VerifyToken(update, context):
 
       vehicle_cnts = getVehCounts(update.message.chat_id, access_t)
       if sql.modifyAccount(update.message.chat_id, ['vehicle_counts'], [vehicle_cnts]):
-        if generateVehicles(update.message.chat_id, access_t):
+        newerVeh = generateVehicles(update.message.chat_id, access_t)
+        if newerVeh:
+          existVeh = []
+          try:
+            for i in sql.inquiryVehicle(update.message.chat_id, None, ['vehicle_id']):
+              existVeh.append(i[0])
+          
+          except:
+            # Message
+            message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: MENU\_2267\n@TeslaAuroraCS 로 문의해주세요. '
+            editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+            return ConversationHandler.END
+          
+          for i in existVeh:
+            factor = 0
+            for j in newerVeh:
+              if i == j: factor = 1
+            if factor == 0:
+              try:
+                sql.deleteVehicle(update.message.chat_id, i)
+
+              except:
+                # Message
+                message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: MENU\_2282\n@TeslaAuroraCS 로 문의해주세요.'
+                editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+                return ConversationHandler.END
+
           message = '\U0001F44F *차량 목록을 가져왔습니다!*\n'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
 
@@ -2242,7 +2325,7 @@ def SETT_VerifyToken(update, context):
               # Failed modifyAccount()
               else:
                 # Message
-                message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+                message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: MENU\_2327\n@TeslaAuroraCS 로 문의해주세요.'
                 update.message.reply_text(message, parse_mode = 'Markdown')
                             
                 return ConversationHandler.END
@@ -2250,7 +2333,7 @@ def SETT_VerifyToken(update, context):
           # Failed Write Token
           else:
             # Message
-            message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+            message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: MENU\_2335\n@TeslaAuroraCS 로 문의해주세요.'
             update.message.reply_text(message, parse_mode = 'Markdown')
                         
             return ConversationHandler.END
@@ -2258,7 +2341,7 @@ def SETT_VerifyToken(update, context):
         # Failed createVehID
         else:
           # Message
-          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+          message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: MENU\_2343\n@TeslaAuroraCS 로 문의해주세요.'
           editable_msg.edit_text(message, parse_mode = 'Markdown')
                     
           return ConversationHandler.END
@@ -2266,7 +2349,7 @@ def SETT_VerifyToken(update, context):
       # Failed modifyAccount | countVeh
       else:
         # Message
-        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        message = '\U000026A0 *차량 목록을 가져오는 데에 실패했습니다.*\nERRCODE: MENU\_2351\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
                 
         return ConversationHandler.END
@@ -2335,7 +2418,7 @@ def SETT_VerifyVehicle(update, context):
       # Failed modifyAccount()
       else:
         # Message
-        message = '\U000026A0 *데이터 저장에 실패했습니다.*\n@TeslaAuroraCS 로 문의해주세요.'
+        message = '\U000026A0 *데이터 저장에 실패했습니다.*\nERRCODE: MENU\_2420\n@TeslaAuroraCS 로 문의해주세요.'
         editable_msg.edit_text(message, parse_mode = 'Markdown')
         
         return ConversationHandler.END
@@ -2377,15 +2460,15 @@ def SETT_VerifyVehicle(update, context):
         return SETT_VerifyVehicle(update, context)
 
       else:
-        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_1\n'
-        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_2\n'
-        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_3\n'
-        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_4\n'
-        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_5\n'
-        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_6\n'
-        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_7\n'
-        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_8\n'
-        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: JOIN\_TOKEN\_GEN\_9\n'
+        if _a == 1: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2462\n'
+        elif _a == 2: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2463\n'
+        elif _a == 3: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2464\n'
+        elif _a == 4: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2465\n'
+        elif _a == 5: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2466\n'
+        elif _a == 6: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2467\n'
+        elif _a == 7: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2468\n'
+        elif _a == 8: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2469\n'
+        else: message = '\U000026A0 *토큰 갱신에 실패했습니다.*\nERRCODE: MENU\_2470\n'
 
       message += '@TeslaAuroraCS 로 문의해주세요.'
       keyboard = [['\U0001F519 돌아가기']]
@@ -2503,7 +2586,7 @@ def SETT_ProcessModify(update, context, column):
   
   else:
     # Message
-    message = '\U000026A0 *정보 수정에 실패하였습니다.*\n잠시 후 다시 시도하세요.'
+    message = '\U000026A0 *정보 수정에 실패하였습니다.*\nERRCODE: MENU\_2588\n잠시 후 다시 시도하세요.'
     keyboard = [['\U0001F519 돌아가기']]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -2540,7 +2623,7 @@ def SETT_Withdrawal_Done(update, context):
   
   except:
     # Message
-    message = '\U000026A0 *탈퇴 처리 중 오류가 발생했습니다.*\n오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
+    message = '\U000026A0 *탈퇴 처리 중 오류가 발생했습니다.*\nERRCODE: MENU\_2625\n오류가 지속되는 경우 @TeslaAuroraCS 로 문의해주세요.'
     update.message.reply_text(message, reply_markup = ReplyKeyboardRemove(), parse_mode = 'Markdown')
 
     return ConversationHandler.END
@@ -2559,7 +2642,7 @@ def SETT_DefaultVehicle(update, context):
     # Message
     message = '\U000026A0 *한 대의 차량만 보유하고 있습니다.*\n'\
             + '자주 사용하는 차량은 2대 이상의 차량 중 한 대만을 선택하여 주 기능을 사용할 수 있는 차량을 설정하는 기능입니다.\n'\
-            + '차량 목록을 갱신하려는 경우, 액세스 토큰 갱신을 통해 새로운 차량 정보를 가져올 수 있습니다.'
+            + '차량 목록을 갱신하려는 경우, \'테슬라 토큰 갱신\'을 통해 새로운 차량 정보를 가져올 수 있습니다.'
     keyboard = [['\U0001F519 돌아가기']]
 
   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)

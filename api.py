@@ -231,12 +231,13 @@ def verifyConn(token):
 
 # GENERATE
 def generateVehicles(chat_id, token): # 함수명 변경
+	ids = []
 	try:
 		for i in __vehicles(token, 200):
 			if sql.createVehicle(
-				chat_id, i['id'], i['display_name'], i['vin']): pass
+				chat_id, i['id'], i['display_name'], i['vin']): ids.append(i['id'])
 			else: return False
-		return True
+		return ids
 
 	except Exception as e:
 		errorLogger.error('generateVehicles: ' + str(e), exc_info = False)
