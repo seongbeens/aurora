@@ -26,7 +26,8 @@ def COMMON_GetVehiclesConfig_Schedule():
 
 def COMMON_GetVehiclesConfig():
   def _getApi(_chat_id, _veh_id):
-    if getVehCurrent(_chat_id, _veh_id) == 'online':
+    vehicle_state = getVehCurrent(_chat_id, _veh_id)
+    if vehicle_state == 'online':
       logger.debug('VEHCONF: getVehCurrent({}, {}) == online'.format(_chat_id, _veh_id))
 
       def _isNull(columns):
@@ -50,7 +51,22 @@ def COMMON_GetVehiclesConfig():
         
         else: logger.warning('VEHCONF: modifyVehicle({}, {}) Failed.'.format(_chat_id, _veh_id))
       
-    else: 
+    elif vehicle_state in [401, 404]:
+      logger.debug('VEHCONF: getVehCurrent({}, {}) in 401, 404'.format(_chat_id, _veh_id))
+
+      # Renewal Access Token
+      if Token(_chat_id).renewal() == 0:
+        return _getApi(_chat_id, _veh_id)
+
+      else:
+        # Renewal Access Token(1-More-Time)
+        _a = Token(_chat_id).renewal()
+        if _a == 0: return _getApi(_chat_id, _veh_id)
+        else:
+          text = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하려고 했지만 실패했어요\U0001F609\n설정 메뉴를 이용하여 리프레시 토큰을 갱신해주세요.'
+          bot.send_message(chat_id = _chat_id, text = text, parse_mode = 'Markdown')
+      
+    else:
       logger.debug('VEHCONF: getVehCurrent({}, {}) != online'.format(_chat_id, _veh_id))
 
   for tuples in sql.inquiryVehicles():
@@ -87,7 +103,8 @@ def COMMON_GetVehiclesState_Target():
       time.sleep(0.1)
 
 def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
-  if getVehCurrent(chat_id, veh_id) == 'online':
+  vehicle_state = getVehCurrent(chat_id, veh_id)
+  if vehicle_state == 'online':
     logger.debug('VEHSTAT: getVehCurrent({}, {}) == online'.format(chat_id, veh_id))
 
     data = {'vehicle_state': '', 'charge_state': '', 'drive_state': ''}
@@ -135,6 +152,21 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
         'VEHSTAT: Exit Idle mode. ({}, {})'
         .format(chat_id, veh_id))
 
+  elif vehicle_state in [401, 404]:
+    logger.debug('VEHSTAT: getVehCurrent({}, {}) in 401, 404'.format(chat_id, veh_id))
+
+    # Renewal Access Token
+    if Token(chat_id).renewal() == 0:
+      return COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c)
+
+    else:
+      # Renewal Access Token(1-More-Time)
+      _a = Token(chat_id).renewal()
+      if _a == 0: return COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c)
+      else:
+        text = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하려고 했지만 실패했어요\U0001F609\n설정 메뉴를 이용하여 리프레시 토큰을 갱신해주세요.'
+        bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+  
   else: 
     logger.debug(
       'VEHSTAT: getVehCurrent({}, {}) != online'
