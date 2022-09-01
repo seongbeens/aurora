@@ -6,7 +6,7 @@ from telegram import Bot
 
 from api import *
 
-NOTI_INPUT, NOTI_CONFIRM = range(2)
+NOTI_INPUT, NOTI_CONFIRM, PNOTI_PHOTO_INPUT, PNOTI_TEXT_INPUT, PNOTI_CONFIRM = range(5)
 
 # 회원 수(오늘 가입자 수)
 # 차량 수
@@ -16,9 +16,9 @@ NOTI_INPUT, NOTI_CONFIRM = range(2)
 # veh_id로 차량정보 조회
 
 # Telegram
-telegram_token = '5050977880:AAElXPYQ6X84iFrQHUP-daUltKmGNpF5zCg'
+telegram_token = '5050977880:AAGz6a_cZYVWXurdDMbAbr_shqejjJ4uDis' #테슬라오로라
 bot = Bot(token = telegram_token)
-telegram_token = '2141967252:AAHbOShngBVTV8gon0EKo99zt3K_UMknMNM'
+telegram_token = '2141967252:AAHbOShngBVTV8gon0EKo99zt3K_UMknMNM' #라딘이
 updater = Updater(telegram_token, use_context = True)
 
 # Enable logging
@@ -120,9 +120,71 @@ class Notice:
               # if i[0] == 1704527105:
                 try:
                   reply_markup = ReplyKeyboardMarkup(
-                    [['\U0001F920 다시 시작하기']], one_time_keyboard = True, resize_keyboard = True)
+                    [['\U0001F920']], one_time_keyboard = True, resize_keyboard = True)
                   bot.send_message(chat_id = i[0],
-                    text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown', disable_notification = True)
+                    text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
+                    #text = self.message, reply_markup = reply_markup, parse_mode = 'Markdown', disable_notification = True)
+                  logger.info('Sending message. ({})'.format(i[0]))
+                  time.sleep(0.01)
+                except Exception as e:
+                  logger.warning(e)
+          
+        logger.info('Done sending messages.')
+        text = '*전송이 완료되었습니다.*'
+    
+      else:
+        text = '*전송이 취소되었습니다.*'
+
+      context.bot.edit_message_text(text = text, parse_mode = 'Markdown',
+                                    chat_id = update.callback_query.message.chat_id,
+                                    message_id = update.callback_query.message.message_id)
+
+    return ConversationHandler.END
+
+
+class PhotoNotice:
+  def input_photo(self, update, context):
+    if adminAuthentication(update.message.chat_id):
+      update.message.reply_text('*공지할 사진을 전송하세요.*', parse_mode = 'Markdown')
+
+      return PNOTI_PHOTO_INPUT
+    
+    else: return ConversationHandler.END
+
+  def input_text(self, update, context):
+    self.photo = context.bot.getFile(update.message.photo[-1].file_id).download('photo.jpg')
+    update.message.reply_text('*공지할 메세지를 입력하세요.*', parse_mode = 'Markdown')
+
+    return PNOTI_TEXT_INPUT
+
+  def confirm(self, update, context):
+    self.message = update.message.text
+    
+    buttons = build_button([['전송', '취소']], 'PNOTICE')
+    reply_markup = InlineKeyboardMarkup(build_menu(buttons))
+
+    update.message.reply_text('*메세지를 보낼까요?*', reply_markup = reply_markup, parse_mode = 'Markdown')
+
+    return PNOTI_CONFIRM
+  
+  def execution(self, update, context):
+    if update.callback_query.data.split(',')[0] == 'PNOTICE':
+      if update.callback_query.data.split(',')[1] == '전송':
+        text = '*공지사항을 전달하는 중입니다...*'
+        context.bot.edit_message_text(text = text, parse_mode = 'Markdown',
+                                    chat_id = update.callback_query.message.chat_id,
+                                    message_id = update.callback_query.message.message_id)
+
+        for i in sql.inquiryAccounts(['vehicle_counts']):
+          if not None in i:
+            if i[1] > 0:
+              # if i[0] == 1704527105:
+                try:
+                  reply_markup = ReplyKeyboardMarkup(
+                    [['\U0001F920']], one_time_keyboard = True, resize_keyboard = True)
+                  bot.send_photo(chat_id = i[0],
+                    photo = open('photo.jpg', 'rb'), caption = self.message, reply_markup = reply_markup, parse_mode = 'Markdown')
+                    # disable_notification = True)
                   logger.info('Sending message. ({})'.format(i[0]))
                   time.sleep(0.01)
                 except Exception as e:
@@ -158,9 +220,11 @@ def test_inlineURL(update, context):
 
 #init
 Noti = Notice()
+PNoti = PhotoNotice()
 
 test_conv_handler = ConversationHandler(
   entry_points = [CommandHandler('notice', Noti.input, pass_args = True),
+                  CommandHandler('photo', PNoti.input_photo, pass_args = True),
                   CommandHandler('report', Report().result, pass_args = True),
                   CommandHandler('doc', sendDoc, pass_args = True)],
   states = {
@@ -168,6 +232,12 @@ test_conv_handler = ConversationHandler(
       [MessageHandler(Filters.text, Noti.confirm)],
     NOTI_CONFIRM:
       [CallbackQueryHandler(Noti.execution)],
+    PNOTI_PHOTO_INPUT:
+      [MessageHandler(Filters.photo, PNoti.input_text)],
+    PNOTI_TEXT_INPUT:
+      [MessageHandler(Filters.text, PNoti.confirm)],
+    PNOTI_CONFIRM:
+      [CallbackQueryHandler(PNoti.execution)],
   },
   fallbacks = [CommandHandler('hey', Noti.input, pass_args = True)])
 
