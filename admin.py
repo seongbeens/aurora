@@ -56,7 +56,7 @@ class Report:
   def result(self, update, context):
     if adminAuthentication(update.message.chat_id):
       # Counts Vars
-      counts_allUsers, counts_actualUsers, counts_vehicles = 0, 0, 0
+      counts_allUsers, counts_actualUsers, counts_recreateUsers, counts_vehicles = 0, 0, 0, 0
 
       for i in sql.inquiryAccounts(['vehicle_counts']):
         if not None in i:
@@ -68,6 +68,10 @@ class Report:
         else:
           counts_allUsers += 1
 
+      for i in sql.inquiryAccounts(['date_recreate']):
+        if not None in i:
+          counts_recreateUsers += 1
+      
       for i in sql.inquiryVehicles():
         counts_vehicles += 1
       
@@ -76,11 +80,14 @@ class Report:
         counts_todayUsers = conn.cursor().execute("SELECT * FROM Accounts "\
         + "WHERE DATE(date_create) = CURRENT_DATE()")
       
+        counts_oldUsers = conn.cursor().execute("SELECT * FROM Accounts "\
+        + "WHERE DATE(date_recent) < CURRENT_DATE()-90")
+      
       finally:
         conn.close()
 
-      update.message.reply_text('가입한 전체 회원은 *{}명*,\n실제 사용자 수는 *{}명*,\n오늘 가입자 수는 *{}명*,\n등록된 차량 대수는 *{}대*입니다.'
-        .format(str(counts_allUsers), str(counts_actualUsers), str(counts_todayUsers), str(counts_vehicles)), parse_mode = 'Markdown')
+      update.message.reply_text('가입한 전체 회원은 *{}명*,\n차량이 정상 등록된 사용자는 *{}명*,\n재가입자는 *{}명*, 오늘 하루 가입자는 *{}명*,\n90일 이상 장기 미접속자는 *{}명*,\n등록된 전체 차량은 *{}대*입니다.'
+        .format(str(counts_allUsers), str(counts_actualUsers), str(counts_recreateUsers), str(counts_todayUsers), str(counts_oldUsers), str(counts_vehicles)), parse_mode = 'Markdown')
 
       return ConversationHandler.END
     
