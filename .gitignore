@@ -4,4 +4,4 @@ vars.py
 tmp.py
 start.sh
 nohup.out
-requires.txt
+requirements.txt
