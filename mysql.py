@@ -69,6 +69,9 @@ def inquiryAccount(chat_id, columns): # 구문 변경
     conn = connect()
     cur = conn.cursor()
     cur.execute(
+      "UPDATE Accounts SET date_recent = current_timestamp WHERE telegram_id = %s", (chat_id))
+    conn.commit()
+    cur.execute(
       "SELECT {} FROM Accounts ".format(', '.join(columns))\
     + "WHERE telegram_id = %s", (chat_id))
     return cur.fetchone()
