@@ -380,7 +380,7 @@ def PREVENT_Sleep_Schedule():
   threading.Thread(name = _ThreadName, target = PREVENT_Sleep_Target).start()
 
 def PREVENT_Sleep_Target():
-  for tuples in sql.inquirySchedules(['prevent_sleep_1', 'prevent_sleep_2']):
+  for tuples in sql.inquirySchedules(['prevent_sleep_1', 'prevent_sleep_2', 'prevent_sleep_3', 'prevent_sleep_4', 'prevent_sleep_5']):
     for i in tuples[2:]:
       if i:
         if len(i) == 13: 
@@ -637,7 +637,7 @@ def __schedules():
   schedule.every().minutes.at(':00').do(PREVENT_Sleep_Schedule)
   schedule.every().minutes.at(':05').do(PreConditioning_Schedule)
   schedule.every().minutes.at(':10').do(CHRG_Stop_Schedule)
-  schedule.every().minutes.at(':15').do(SENTRY_Switch_Schedule)
+  # schedule.every().minutes.at(':15').do(SENTRY_Switch_Schedule)
 
   schedule.every().monday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)
   schedule.every().tuesday.at('22:57').do(REMIND_ChrgTime_WakeVeh_Schedule)

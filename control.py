@@ -255,33 +255,39 @@ def window_vent_close(update, context, veh_id, editable_msg):
 
   else: return failed()
 
-def sentry_on_off(update, context, veh_id, editable_msg):
-  _a = sentryToggle(update.message.chat_id, veh_id)
+def sentry_on_off(update, context, veh_id, editable_msg): # _sentry가 response 406 오류
+  message = '\U000026A0 *이 기능은 현재 지원하지 않습니다.*\n보안 상의 이유로 일시적으로 사용할 수 없습니다\U0001F62D\n업데이트가 되는 대로 소식 전해드리겠습니다.'
+  editable_msg.edit_text(message, parse_mode = 'Markdown')
+
+  return menu(update, context, True)
+
+# def sentry_on_off(update, context, veh_id, editable_msg):
+#   _a = sentryToggle(update.message.chat_id, veh_id)
   
-  # Check State of Locked
-  if _a == 1: # Turn ON
-    # Delete Loading Message
-    context.bot.deleteMessage(
-      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+#   # Check State of Locked
+#   if _a == 1: # Turn ON
+#     # Delete Loading Message
+#     context.bot.deleteMessage(
+#       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
     
-    # Message
-    message = '\U0001F31F *감시모드가 켜졌습니다.*'
-    update.message.reply_text(message, parse_mode = 'Markdown')
+#     # Message
+#     message = '\U0001F31F *감시모드가 켜졌습니다.*'
+#     update.message.reply_text(message, parse_mode = 'Markdown')
     
-    return menu(update, context, True)
+#     return menu(update, context, True)
 
-  elif _a == 0: # Turn OFF
-    # Delete Loading Message
-    context.bot.deleteMessage(
-      message_id = editable_msg.message_id, chat_id = update.message.chat_id)
+#   elif _a == 0: # Turn OFF
+#     # Delete Loading Message
+#     context.bot.deleteMessage(
+#       message_id = editable_msg.message_id, chat_id = update.message.chat_id)
 
-    # Message
-    message = '\U0001F31F *감시모드가 꺼졌습니다.*'
-    update.message.reply_text(message, parse_mode = 'Markdown')
+#     # Message
+#     message = '\U0001F31F *감시모드가 꺼졌습니다.*'
+#     update.message.reply_text(message, parse_mode = 'Markdown')
 
-    return menu(update, context, True)
+#     return menu(update, context, True)
 
-  else: return failed()
+#   else: return failed()
 
 def flash_headlight(update, context, veh_id, editable_msg):
   if flashlights(update.message.chat_id, veh_id):
