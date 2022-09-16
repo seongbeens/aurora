@@ -703,19 +703,26 @@ class Sentry:
     self.editable_msg = []
   
   def menu(self, update, context, rtn = False):
-    if not rtn:
-      # Logging Conversation
-      convLog(update, convLogger)
-
     # Message
-    message = '감시모드 자동화 메뉴에요\U0001F636'
-    keyboard = [['스케줄 추가', '스케줄 삭제']]
-    keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+    message = '\U000026A0 *이 기능은 현재 지원하지 않습니다.*\n보안 상의 이유로 일시적으로 사용할 수 없습니다\U0001F62D\n업데이트가 되는 대로 소식 전해드리겠습니다.'
+    update.message.reply_text(message, parse_mode = 'Markdown')
 
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
-    update.effective_message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+    return SCHEDL_Menu(update, context, True)
 
-    return SENTRY_MENU
+  # def menu(self, update, context, rtn = False):
+  #   if not rtn:
+  #     # Logging Conversation
+  #     convLog(update, convLogger)
+
+  #   # Message
+  #   message = '감시모드 자동화 메뉴에요\U0001F636'
+  #   keyboard = [['스케줄 추가', '스케줄 삭제']]
+  #   keyboard += [['\U0001F3F7 도움말', '\U0001F519 돌아가기']]
+
+  #   reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
+  #   update.effective_message.reply_text(message, reply_markup = reply_markup, parse_mode = 'Markdown')
+
+  #   return SENTRY_MENU
 
   def help(self, update, context):
     # Logging Conversation
@@ -1104,7 +1111,7 @@ class PreventSleep:
             + '매일 자동으로 차량을 온라인 상태로 유지시켜 주는 스케줄링 기능입니다. '\
             + '(예시 : 매일 06시에 1시간동안 온라인 상태 유지)\n'\
             + '유지 시간을 0시간으로 설정하면 차량을 한 번만 깨우고, 24시간으로 설정하면 매일 항시 온라인 상태를 유지하게끔 합니다.\n'\
-            + '스케줄은 차량별로 최대 2개까지 등록할 수 있으며, 스케줄 실행 시간이 중복되는 경우 나중에 실행되는 스케줄은 실행되지 않습니다.\n'\
+            + '스케줄은 차량별로 최대 5개까지 등록할 수 있으며, 스케줄 실행 시간이 중복되는 경우 나중에 실행되는 스케줄은 실행되지 않습니다.\n'\
             + '차량이 2대 이상인 경우 현재 설정된 차량에 대해 스케줄이 설정됩니다.\n'\
             + '한 번 등록한 스케줄을 변경하려면 직접 삭제하고 다시 등록하여야 합니다.'
     keyboard = [['\U0001F519 돌아가기']]
@@ -1116,7 +1123,7 @@ class PreventSleep:
 
   # Prevent - ADD
   def findValue(self, chat_id, veh_id, type):
-    columns = ['prevent_sleep_1', 'prevent_sleep_2']
+    columns = ['prevent_sleep_1', 'prevent_sleep_2', 'prevent_sleep_3', 'prevent_sleep_4', 'prevent_sleep_5']
     lists = sql.inquirySchedule(chat_id, veh_id, columns)
 
     if not lists:
@@ -1223,7 +1230,7 @@ class PreventSleep:
     if _column == 'FULL':
       # Message
       message = '\U000026A0 *더 이상 스케줄을 추가할 수 없습니다.*\n'\
-              + '절전 방지 스케줄은 2개까지 저장할 수 있으며, 스케줄을 변경하시려면 기존 스케줄을 삭제한 후 새로 추가하여야 합니다.'
+              + '절전 방지 스케줄은 5개까지 저장할 수 있으며, 스케줄을 변경하시려면 기존 스케줄을 삭제한 후 새로 추가하여야 합니다.'
       keyboard = [['\U0001F519 돌아가기']]
 
       reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard = True, resize_keyboard = True)
@@ -1392,7 +1399,7 @@ class PreventSleep:
 
   # PREVENT: Delete Schedule
   def delKeyboardMarkup(self, chat_id, veh_id):
-    columns = ['prevent_sleep_1', 'prevent_sleep_2']
+    columns = ['prevent_sleep_1', 'prevent_sleep_2', 'prevent_sleep_3', 'prevent_sleep_4', 'prevent_sleep_5']
     keyboard, k = [], 0
     keyboard.append([])
     
