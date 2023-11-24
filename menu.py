@@ -186,7 +186,7 @@ def STAT_Execution(update, context, veh_id, editable_msg):
 
   # Messages
   # 공통
-  message  = '*{}의 상태를 알려드릴게요\U0001F606*\n'.format(vehData['display_name'])
+  message  = '*{}의 상태를 알려드릴게요\U0001F606*\n'.format(vehData['vehicle_state']['vehicle_name'])
   if vehData['drive_state']['shift_state'] in ['D', 'N', 'R']:
     message += '\U0001F512 차량이 {}km/h로 주행하고 있어요.\n'.format(round(vehData['drive_state']['speed']*1.609344))
   else:
@@ -2403,7 +2403,7 @@ def SETT_VerifyVehicle(update, context):
     # Matching Vehicle(ID - DP_NAME)
     for i in getVehCurrent(update.message.chat_id):
       vID.insert(0, i['id'])
-      vName.insert(0, i['display_name'])
+      vName.insert(0, i['vehicle_state']['vehicle_name'])
       # [0]에 insert하면서 기존 데이터는 [1]로 옮겨짐
       
     # Verify Reply

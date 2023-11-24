@@ -235,7 +235,7 @@ def generateVehicles(chat_id, token): # 함수명 변경
 	try:
 		for i in __vehicles(token, 200):
 			if sql.createVehicle(
-				chat_id, i['id'], i['display_name'], i['vin']): ids.append(i['id'])
+				chat_id, i['id'], i['vehicle_state']['vehicle_name'], i['vin']): ids.append(i['id'])
 			else: return False
 		return ids
 
@@ -714,63 +714,3 @@ class Token:
       if verifyConn(self.access_token): return True
 
     return False
-
-'''
-def fnWakeUp(token):
-	print('******************** fnWakeUp() initiated. ********************') #Debug
-	try:
-		for i in _vehicles(token, 200):
-			if i['state'] == 'online': pass
-			elif 'asleep':
-				if _wakeUp(i['id']): pass
-				else:
-					print('fnWakeUp(): Wake up Failed.') #Debug
-					return False
-			else:
-				print('fnWakeUp(): Vehicle Connection Error.', i['state']) #Debug
-				return False
-		return True
-	except:
-		print('fnWakeUp(): Exception error that occurred in the TRY syntax.')
-		return False
-
-def fnStatus():
-	print('******************** fnStatus() initiated. ********************') #Debug
-	try:
-		for i in _vehicles(200):
-			vid = i['id']
-			state = i['state']
-			name = i['display_name']
-			print(vid, name, state)
-			if state == 'online':
-				if _chrgState(vid) == None:
-					print('fnStatus(): Failed to check the charging status.')
-				elif 'Disconnected':
-					print('fnStatus(): Disconnected.')
-				elif 'Charging':
-					print('fnStatus(): Already Charging.')
-				elif 'NoPower':
-					print('fnStatus(): NoPower.')
-					#bot.send_message(chat_id = 1704527105, text = '[경부하 충전 시간 알리미]\n오후 11시부터 경부하 전력 시간대입니다.\n충전 대기 중인 차량의 충전을 시작해주세요.')
-					print('fnStatus(): [Telegram] Sent a message successfully.')
-			elif 'asleep':
-				main()
-				break
-			else:
-				print('fnStatus(): Vehicle Connection Error.', state)
-				#bot.send_message(chat_id = 1704527105, text = '[경부하 충전 시간 알리미]\n차량과의 연결에 실패했습니다.\n로그를 확인하시기 바랍니다.')
-	except:
-		print('fnStatus(): Exception error that occurred in the TRY syntax.')
-
-def main():
-	print('******************** main() initiated. ********************') #Debug
-	for i in range(0, 4):
-		if fnWakeUp():
-			fnStatus()
-			return True
-		else: continue
-	print('main(): fnWakeUp Return False.')
-	#bot.send_message(chat_id = 1704527105, text = '[경부하 충전 시간 알리미]\n차량을 깨울 수 없습니다.\n로그를 확인하시기 바랍니다.')
-	return False
-
-'''
