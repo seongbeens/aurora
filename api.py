@@ -405,7 +405,7 @@ def windowToggle(chat_id, veh_id):
 				else: return False
 			else:
 				if __window(veh_id, token, 'close',
-					_data['drive_state']['latitude'], _data['drive_state']['longitude']): return 0
+					_data['drive_state']['active_route_latitude'], _data['drive_state']['active_route_longitude']): return 0
 				else: return False
 		else: return False
 

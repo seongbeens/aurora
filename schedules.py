@@ -176,7 +176,7 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
 def __collect(chat_id, veh_id, data):
     columns = ['odometer', 'car_version', 'latitude', 'longitude']
     tuples = [round(data['vehicle_state']['odometer']*1.609344), data['vehicle_state']['car_version'].split()[0],
-              data['drive_state']['latitude'], data['drive_state']['longitude']]
+              data['drive_state']['active_route_latitude'], data['drive_state']['active_route_longitude']]
 
     # Update Vehicle Information
     if sql.modifyVehicle(chat_id, veh_id, columns, tuples):
@@ -633,7 +633,7 @@ def __schedules():
   schedule.every().hours.at('00:20').do(COMMON_GetVehiclesConfig_Schedule)
   schedule.every().hours.at('30:20').do(COMMON_GetVehiclesConfig_Schedule)
 
-  schedule.every().minutes.at(':30').do(COMMON_GetVehiclesState_Schedule)
+  schedule.every(2).minutes.at(':30').do(COMMON_GetVehiclesState_Schedule)
 
   schedule.every().minutes.at(':00').do(PREVENT_Sleep_Schedule)
   schedule.every().minutes.at(':05').do(PreConditioning_Schedule)
