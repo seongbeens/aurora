@@ -207,18 +207,6 @@ def __port(id, token, togg):
 			time.sleep(3)
 	return False
 
-def __data_request(id, token, params):
-	url = 'https://owner-api.teslamotors.com/api/1/vehicles/{}/data_request/'.format(id) + params
-	headers = {'Authorization': 'Bearer ' + token, 'User-Agent': 'Shortcuts'}
-	for _ in range(0, 10):
-		r = requests.get(url, headers = headers)
-		if r.status_code == 401: return r.status_code
-		elif r.status_code == 429: return r.status_code
-		elif r.status_code == 200:
-			d = json.loads(r.content)['response']
-			if d: return d
-	return False
-
 ############################################################################################################
 
 # External Def.
@@ -323,8 +311,8 @@ def getChargeState(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'charge_state')
-			if _data: return _data
+			_data = __vehdata(veh_id, token)
+			if _data: return _data['charge_state']
 		return False
 
 	except Exception as e:
@@ -335,8 +323,8 @@ def getClimateState(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'climate_state')
-			if _data: return _data
+			_data = __vehdata(veh_id, token)
+			if _data: return _data['climate_state']
 		return False
 
 	except Exception as e:
@@ -347,8 +335,8 @@ def getDriveState(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'drive_state')
-			if _data: return _data
+			_data = __vehdata(veh_id, token)
+			if _data: return _data['drive_state']
 		return False
 
 	except Exception as e:
@@ -359,8 +347,8 @@ def getVehicleConfig(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_config')
-			if _data: return _data
+			_data = __vehdata(veh_id, token)
+			if _data: return _data['vehicle_config']
 		return False
 
 	except Exception as e:
@@ -371,8 +359,8 @@ def getVehicleState(chat_id, veh_id):
 	try:
 		token = __inquiryToken(chat_id)
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_state')
-			if _data: return _data
+			_data = __vehdata(veh_id, token)
+			if _data: return _data['vehicle_state']
 		return False
 
 	except Exception as e:
@@ -385,14 +373,14 @@ def lockToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_state')
+			_data = __vehdata(veh_id, token)
 			if _data: break
 
 		if _data:
-			if _data['locked']:
+			if _data['vehicle_state']['locked']:
 				if __unlock(veh_id, token): return 1
 				else: return False
-			elif not _data['locked']:
+			elif not _data['vehicle_state']['locked']:
 				if __lock(veh_id, token): return 0
 				else: return False
 			else: return False
@@ -407,20 +395,17 @@ def windowToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_state')
+			_data = __vehdata(veh_id, token)
 			if _data: break
 
 		if _data:
-			if ((_data['fd_window'] == 0) & (_data['fp_window'] == 0)
-			  & (_data['rd_window'] == 0) & (_data['rp_window'] == 0)):
+			if ((_data['vehicle_state']['fd_window'] == 0) & (_data['vehicle_state']['fp_window'] == 0)
+			  & (_data['vehicle_state']['rd_window'] == 0) & (_data['vehicle_state']['rp_window'] == 0)):
 				if __window(veh_id, token, 'vent'): return 1
 				else: return False
 			else:
-				for _ in range(0, 9):
-					_data = __data_request(veh_id, token, 'drive_state')
-					if _data: break
 				if __window(veh_id, token, 'close',
-					_data['latitude'], _data['longitude']): return 0
+					_data['drive_state']['latitude'], _data['drive_state']['longitude']): return 0
 				else: return False
 		else: return False
 
@@ -433,14 +418,14 @@ def sentryToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'vehicle_state')
+			_data = __vehdata(veh_id, token)
 			if _data: break
 
 		if _data:
-			if not _data['sentry_mode']:
+			if not _data['vehicle_state']['sentry_mode']:
 				if __sentry(veh_id, token, True): return 1
 				else: return False
-			elif _data['sentry_mode']:
+			elif _data['vehicle_state']['sentry_mode']:
 				if __sentry(veh_id, token, False): return 0
 				else: return False
 			else: return False
@@ -466,16 +451,16 @@ def HVACToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'climate_state')
+			_data = __vehdata(veh_id, token)
 			if _data: break
 
 		if _data:
-			if not _data['is_climate_on']:
-				_dtemp = _data['driver_temp_setting']
-				_ptemp = _data['passenger_temp_setting']
+			if not _data['climate_state']['is_climate_on']:
+				_dtemp = _data['climate_state']['driver_temp_setting']
+				_ptemp = _data['climate_state']['passenger_temp_setting']
 				if __hvac(veh_id, token, 'start'): return _dtemp
 				else: return False
-			elif _data['is_climate_on']:
+			elif _data['climate_state']['is_climate_on']:
 				if __hvac(veh_id, token, 'stop'): return 0
 				else: return False
 			else: return False
@@ -529,23 +514,16 @@ def portToggle(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'drive_state')
+			_data = __vehdata(veh_id, token, 'drive_state')
 			if _data: break
 
 		if _data:
-			if _data['shift_state'] in ['D', 'N', 'R']:
-				return -1
-		
-		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'charge_state')
-			if _data: break
-
-		if _data:
-			if not _data['charge_port_door_open']:
+			if _data['drive_state']['shift_state'] in ['D', 'N', 'R']: return -1
+			if not _data['charge_state']['charge_port_door_open']:
 				if __port(veh_id, token, 'open'): return 1
 				else: return False
-			elif _data['charge_port_door_open']:
-				if _data['charging_state'] == 'Disconnected':
+			elif _data['charge_state']['charge_port_door_open']:
+				if _data['charge_state']['charging_state'] == 'Disconnected':
 					if __port(veh_id, token, 'close'): return 0
 					else: return False
 				else: return -2
@@ -561,11 +539,11 @@ def portUnlock(chat_id, veh_id):
 		token = __inquiryToken(chat_id)
 
 		for _ in range(0, 9):
-			_data = __data_request(veh_id, token, 'charge_state')
+			_data = __vehdata(veh_id, token)
 			if _data: break
 
 		if _data:
-			if _data['charge_port_door_open']:
+			if _data['charge_state']['charge_port_door_open']:
 				if __port(veh_id, token, 'open'): return 1
 				else: return False
 			else: return 0
