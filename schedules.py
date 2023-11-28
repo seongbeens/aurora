@@ -11,6 +11,7 @@ from dicts import *
 # Enable logging
 logger = logging.getLogger('schedules')
 logger.addHandler(SchedLogHandler)
+logger.setLevel(logging.DEBUG)
 
 # Telegram
 bot = telegram.Bot(token = telegram_token)
@@ -21,7 +22,7 @@ def COMMON_GetVehiclesConfig_Schedule():
   logger.debug('VEHCONF: Schedule has been executed.')
 
   _ThreadName = 'GetVehiclesConfigSchedule'
-  logger.info('Thread ' + _ThreadName + ' started.')
+  logger.debug('Thread ' + _ThreadName + ' started.')
   threading.Thread(name = _ThreadName, target = COMMON_GetVehiclesConfig).start()
 
 def COMMON_GetVehiclesConfig():
@@ -308,7 +309,7 @@ def __chrgCheck(chat_id, veh_id, veh_name, data, _start, _complete):
 # Reminder - Charge Time Pre-wake Vehicle
 # Running @22:57 MON-SAT
 def REMIND_ChrgTime_WakeVeh_Schedule():
-  logger.info('REMIND_ChrgTime_WakeVeh: Schedule has been executed.')
+  logger.debug('REMIND_ChrgTime_WakeVeh: Schedule has been executed.')
 
   _ThreadName = 'ReminderChrgTimeWakeVehSchedule'
   logger.debug('Thread ' + _ThreadName + ' started.')
@@ -318,7 +319,7 @@ def REMIND_ChrgTime_WakeVeh():
   for tuples in sql.inquiryVehicles(['noti_chrgtime']):
     if tuples[2] == 1:
       _ThreadName = 'CTWAKE' + str(tuples[0]) + str(tuples[1])
-      logger.info('Thread ' + _ThreadName + ' started.')
+      logger.debug('Thread ' + _ThreadName + ' started.')
       threading.Thread(name = _ThreadName, target = wakeVehicle, args = (tuples[0], tuples[1])).start()
       time.sleep(0.1)
 
@@ -326,7 +327,7 @@ def REMIND_ChrgTime_WakeVeh():
 # Reminder - Charge Time Alert
 # Running @23:00 MON-SAT
 def REMIND_ChrgTime_Schedule():
-  logger.info('REMIND_ChrgTime: Schedule has been executed.')
+  logger.debug('REMIND_ChrgTime: Schedule has been executed.')
 
   _ThreadName = 'ReminderChargeTimeSchedule'
   logger.debug('Thread ' + _ThreadName + ' started.')
@@ -336,7 +337,7 @@ def REMIND_ChrgTime_Target():
   for tuples in sql.inquiryVehicles(['vehicle_name', 'noti_chrgtime']):
     if tuples[3] == 1:
       _ThreadName = 'CHRGTIME' + str(tuples[0]) + str(tuples[1])
-      logger.info('Thread ' + _ThreadName + ' started.')
+      logger.debug('Thread ' + _ThreadName + ' started.')
       threading.Thread(name = _ThreadName, target = REMIND_ChrgTime_Alert, args = (tuples[0], tuples[1], tuples[2])).start()
 
 def REMIND_ChrgTime_Alert(chat_id, veh_id, veh_name):
@@ -395,7 +396,7 @@ def PREVENT_Sleep_Target():
                 if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
               if not _ThreadExist:
-                logger.info('Thread ' + _ThreadName + ' started.')
+                logger.debug('Thread ' + _ThreadName + ' started.')
                 threading.Thread(name = _ThreadName, target = PREVENT_Sleep, args = (tuples[0], tuples[1], startTime, endTime)).start()
                 time.sleep(0.1)
                 break
@@ -454,7 +455,7 @@ def PreConditioning_Target():
               if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
             if not _ThreadExist:
-              logger.info('Thread ' + _ThreadName + ' started.')
+              logger.debug('Thread ' + _ThreadName + ' started.')
               threading.Thread(name = _ThreadName, target = PreConditioning_exec, args = (tuples[0], tuples[1], startTime, switchTime, endTime)).start()
 
     else: logger.debug('PreConditioning_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
@@ -550,7 +551,7 @@ def CHRG_Stop_Target():
           if str(i).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
         if not _ThreadExist:
-          logger.info('Thread ' + _ThreadName + ' started.')
+          logger.debug('Thread ' + _ThreadName + ' started.')
           threading.Thread(name = _ThreadName, target = chargeStop, args = (tuples[0], tuples[1])).start()
 
 
@@ -585,7 +586,7 @@ def SENTRY_Switch_Target():
               if str(j).split('(')[1].split(',')[0] == _ThreadName: _ThreadExist = True
 
             if not _ThreadExist:
-              logger.info('Thread ' + _ThreadName + ' started.')
+              logger.debug('Thread ' + _ThreadName + ' started.')
               threading.Thread(name = _ThreadName, target = SENTRY_Switch, args = (tuples[0], tuples[1], int(i[11]))).start()
 
     else: logger.debug('SENTRY_Switch_Target: No schedule to execute. ({}, {})'.format(tuples[0], tuples[1]))
