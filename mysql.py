@@ -1,4 +1,5 @@
 import pymysql
+import configparser
 from vars import *
 
 # Enable Logging
@@ -7,7 +8,15 @@ errorLogger.addHandler(ErrorLogHandler)
 
 # Enable MySQL
 def connect():
-  return pymysql.connect(host = 'localhost', user = 'root', password = 'aurora', db = 'aurora', charset = 'utf8mb4')
+    ini = configparser.ConfigParser()
+    ini.read('mysql_config.ini')
+    return pymysql.connect(
+        host=ini.get('mysql', 'host', fallback='localhost'),
+        user=ini.get('mysql', 'user', fallback='root'),
+        password=ini.get('mysql', 'password', fallback='root'),
+        db=ini.get('mysql', 'db', fallback='aurora'),
+        charset=ini.get('mysql', 'charset', fallback='utf8mb4')
+    )
 
 def createAccount(chat_id):
   try:

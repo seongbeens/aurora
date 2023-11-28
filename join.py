@@ -538,7 +538,7 @@ def verifyVehicle_join(update, context):
     # Matching Vehicle(ID - DP_NAME)
     for i in getVehCurrent(update.message.chat_id):
       vID.insert(0, i['id'])
-      vName.insert(0, i['display_name'])
+      vName.insert(0, i['vehicle_state']['vehicle_name'])
       # [0]에 insert하면서 기존 데이터는 [1]로 옮겨짐
       
     # Verify Reply
@@ -646,7 +646,7 @@ def verifyVehicle_expired(update, context):
     # Matching Vehicle(ID <> DP_NAME)
     for i in getVehCurrent(update.message.chat_id):
       vID.insert(0, i['id'])
-      vName.insert(0, i['display_name'])
+      vName.insert(0, i['vehicle_state']['vehicle_name'])
       # [0]에 insert하면서 기존 데이터는 [1]로 옮겨짐
       
     # Verify Reply
