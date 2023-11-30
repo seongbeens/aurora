@@ -1,5 +1,6 @@
 /__pycache__
 /logs
+mysql_config.ini
 vars.py
 tmp.py
 start.sh
