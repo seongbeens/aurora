@@ -52,8 +52,8 @@ def COMMON_GetVehiclesConfig():
         
         else: logger.warning('VEHCONF: modifyVehicle({}, {}) Failed.'.format(_chat_id, _veh_id))
       
-    elif vehicle_state in [401, 404]:
-      logger.debug('VEHCONF: getVehCurrent({}, {}) in 401, 404'.format(_chat_id, _veh_id))
+    elif vehicle_state in [401, 404, 429]:
+      logger.warning('VEHCONF: getVehCurrent({}, {}) Responsed {}(HTTP)'.format(_chat_id, _veh_id, vehicle_state))
 
       # Renewal Access Token
       if Token(_chat_id).renewal() == 0:
@@ -65,7 +65,7 @@ def COMMON_GetVehiclesConfig():
         if _a == 0: return _getApi(_chat_id, _veh_id)
         else:
           text = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하려고 했지만 실패했어요\U0001F609\n설정 메뉴를 이용하여 리프레시 토큰을 갱신해주세요.'
-          bot.send_message(chat_id = _chat_id, text = text, parse_mode = 'Markdown')
+          # bot.send_message(chat_id = _chat_id, text = text, parse_mode = 'Markdown')
       
     else:
       logger.debug('VEHCONF: getVehCurrent({}, {}) != online'.format(_chat_id, _veh_id))
@@ -153,8 +153,8 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
         'VEHSTAT: Exit Idle mode. ({}, {})'
         .format(chat_id, veh_id))
 
-  elif vehicle_state in [401, 404]:
-    logger.debug('VEHSTAT: getVehCurrent({}, {}) in 401, 404'.format(chat_id, veh_id))
+  elif vehicle_state in [401, 404, 429]:
+    logger.warning('VEHSTAT: getVehCurrent({}, {}) Responsed {}(HTTP)'.format(chat_id, veh_id, vehicle_state))
 
     # Renewal Access Token
     if Token(chat_id).renewal() == 0:
@@ -166,7 +166,7 @@ def COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c):
       if _a == 0: return COMMON_GetVehiclesState(chat_id, veh_id, veh_name, _a, _b, _c)
       else:
         text = '\U000026A0 *액세스 토큰이 만료되었습니다.*\n토큰을 자동으로 갱신하려고 했지만 실패했어요\U0001F609\n설정 메뉴를 이용하여 리프레시 토큰을 갱신해주세요.'
-        bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
+        # bot.send_message(chat_id = chat_id, text = text, parse_mode = 'Markdown')
   
   else: 
     logger.debug(
